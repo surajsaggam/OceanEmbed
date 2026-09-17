@@ -1,8 +1,7 @@
 <div align="center">
 
 # 🌊 OceanEmbed
-### Final Technical Specification & Implementation Plan
-#### Satellite-Embedding-Based Deep Learning Framework for Reconstruction of Subsurface Ocean Temperature from Surface Observations
+### Satellite-Embedding-Based Deep Learning Framework for Subsurface Ocean Temperature Reconstruction
 
 [![Ministry](https://img.shields.io/badge/Ministry-Earth%20Sciences%20(MoES)-0A3871?style=for-the-badge&logo=india&logoColor=white)](https://moes.gov.in/)
 [![Agency](https://img.shields.io/badge/Agency-INCOIS-007799?style=for-the-badge)](https://incois.gov.in/)
@@ -14,7 +13,7 @@
 
 **A scientifically rigorous, dual-path deep learning architecture fusing multi-source satellite surface observations into an explicit 128-dimensional latent ocean embedding to reconstruct 3D subsurface thermal fields (0–1000 m).**
 
-[Executive Summary](#-executive-summary--core-philosophy) •
+[Executive Summary](#-executive-summary) •
 [Problem Framing](#1-problem-framing--scientific-context) •
 [Datasets & Sources](#2-satellite-inputs--datasets) •
 [Data Harmonization](#3-data-harmonization-pipeline) •
