@@ -37,8 +37,14 @@ desktop.ini
 # ── Secrets / credentials (NEVER committed) ──────────────────────────────────
 .env
 *.env
+.env.*
+.netrc
+_netrc
+.copernicusmarine/
 credentials.json
 secrets.yaml
+*.key
+*.pem
 
 # ── Temporary files ──────────────────────────────────────────────────────────
 *.log

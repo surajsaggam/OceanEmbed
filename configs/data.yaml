@@ -45,8 +45,8 @@ qc_limits:
   SST:   {min: -2.0,  max: 36.0}   # °C
   SSS:   {min: 0.0,   max: 45.0}   # PSU
   SSH:   {min: -2.0,  max: 2.0}    # m   (update from DUACS docs)
-  U_curr:{min: -3.0,  max: 3.0}    # m/s
-  V_curr:{min: -3.0,  max: 3.0}    # m/s
+  U_curr: {min: -3.0,  max: 3.0}    # m/s
+  V_curr: {min: -3.0,  max: 3.0}    # m/s
   WindU: {min: -30.0, max: 30.0}   # m/s
   WindV: {min: -30.0, max: 30.0}   # m/s
 

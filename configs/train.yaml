@@ -17,7 +17,7 @@ grad_accumulation: 2    # effective batch = batch_size × grad_accumulation = 8
 # SAFE DEFAULT: fp32. Do not change until GPU verification sequence
 # in environment/env_verification.json confirms bf16 or fp16 support.
 # After verification: set to "bf16" or "fp16" as confirmed.
-precision: "fp32"
+precision: "bf16"
 
 # ── Optimiser ─────────────────────────────────────────────────
 optimizer: "adam"          # options: adam | adamw
