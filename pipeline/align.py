@@ -40,9 +40,18 @@ def get_split_date_ranges(split_cfg: Optional[Dict] = None) -> Dict[str, Tuple[p
 
     splits = {}
     for name in ["train", "val", "test"]:
-        sc = getattr(split_cfg, name) if hasattr(split_cfg, name) else split_cfg[name]
-        start = parse_date_str(sc.start if hasattr(sc, "start") else sc["start"])
-        end = parse_date_str(sc.end if hasattr(sc, "end") else sc["end"])
+        start_key = f"{name}_start"
+        end_key = f"{name}_end"
+        if hasattr(split_cfg, start_key) and hasattr(split_cfg, end_key):
+            start = parse_date_str(getattr(split_cfg, start_key))
+            end = parse_date_str(getattr(split_cfg, end_key))
+        elif isinstance(split_cfg, dict) and start_key in split_cfg and end_key in split_cfg:
+            start = parse_date_str(split_cfg[start_key])
+            end = parse_date_str(split_cfg[end_key])
+        else:
+            sc = getattr(split_cfg, name) if hasattr(split_cfg, name) else split_cfg[name]
+            start = parse_date_str(sc.start if hasattr(sc, "start") else sc["start"])
+            end = parse_date_str(sc.end if hasattr(sc, "end") else sc["end"])
         splits[name] = (start, end)
     return splits
 
