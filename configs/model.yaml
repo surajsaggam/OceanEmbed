@@ -1,0 +1,42 @@
+# ============================================================
+# OceanEmbed — Model Configuration (Phase 1)
+# ============================================================
+# Scientific constants (LOCKED — do not change without plan revision):
+in_channels:   14   # 7 physical + 7 validity masks
+embedding_dim: 128  # explicit Ocean Embedding dimension
+out_depths:    15   # temperature outputs at 15 standard depths
+
+# ============================================================
+# Configurable Phase-1 starting values
+# These are engineering choices, NOT scientific constants.
+# Each may be varied as a controlled ablation after the
+# Phase-1 baseline is stable and evaluated.
+# ============================================================
+
+# ── PATH A: Multi-scale CNN ───────────────────────────────────
+cnn_local_channels:     64   # local 3×3 branch output channels
+cnn_dilated_channels:   64   # dilated 3×3 branch output channels
+cnn_dilation:           2    # dilation factor (effective RF ~5×5)
+cnn_spatial_out_channels: 128  # after PATH A concat + 1×1 projection
+
+# ── PATH B: Pointwise MLP ─────────────────────────────────────
+mlp_hidden_channels: 64
+mlp_out_channels:    64
+# Normalization in PATH B.
+# Rationale: PATH B is a per-pixel (1×1) encoder. BatchNorm couples
+# statistics across spatial positions, which is inconsistent with the
+# pointwise design intent. Default: no normalization.
+# Options: "none" | "layernorm" | "batchnorm"
+mlp_norm: "none"
+
+# ── Embedding / Fusion ────────────────────────────────────────
+# embedding_dim is defined above (locked)
+# Normalization in fusion module uses GroupNorm(1, embedding_dim)
+# — see models/embedding.py for correctness rationale.
+
+# ── Attention-guided Decoder ──────────────────────────────────
+dec_channels_1: 64   # first decoder conv output channels
+dec_channels_2: 32   # second decoder conv output channels
+# Attention gate type: "spatial" (default) produces [B,1,H,W] gate map.
+# Alternative: "channel" (squeeze-excitation style, [B,C,1,1]).
+attention_gate: "spatial"

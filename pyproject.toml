@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=65"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "oceanembed"
+version = "0.1.0"
+description = "OceanEmbed: Deep learning framework for subsurface ocean temperature reconstruction"
+requires-python = ">=3.11"
+
+[tool.setuptools.packages.find]
+# Automatically finds all packages (directories with __init__.py)
+# at the project root: pipeline, models, baselines, evaluation, inference, utils
+where = ["."]
+exclude = [
+    "data*",
+    "checkpoints*",
+    "results*",
+    "notebooks*",
+    "scripts*",
+    "tests*",
+    "environment*",
+]

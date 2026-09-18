@@ -1,0 +1,82 @@
+# ============================================================
+# OceanEmbed — Data Configuration
+# ============================================================
+# All domain, variable, split, and path settings.
+# Source of truth for the data pipeline.
+
+# ── Spatial Domain ────────────────────────────────────────────
+domain:
+  lat_min: 5.0       # °N
+  lat_max: 30.0      # °N
+  lon_min: 45.0      # °E
+  lon_max: 105.0     # °E
+  resolution: 0.25   # degrees
+
+# ── Target depth levels (Phase 1, locked) ────────────────────
+depths_m: [0, 5, 10, 20, 30, 50, 75, 100, 125, 150, 200, 300, 500, 700, 1000]
+
+# ── Temporal Split ────────────────────────────────────────────
+# Exact boundaries flex to actual dataset availability.
+# Never randomly mix dates across splits.
+splits:
+  train_start: "2015-01-01"
+  train_end:   "2021-12-31"
+  val_start:   "2022-01-01"
+  val_end:     "2022-12-31"
+  test_start:  "2023-01-01"
+  test_end:    "2024-12-31"
+
+# ── Dry-run subset ────────────────────────────────────────────
+# Configurable; January 2020 is the default (engineering choice, not special)
+dry_run:
+  start: "2020-01-01"
+  end:   "2020-01-31"
+
+# ── Paths ─────────────────────────────────────────────────────
+raw_dir:          data/raw/
+processed_dir:    data/processed/
+norm_stats_path:  data/norm_stats/train_stats.json
+clim_fill_path:   data/norm_stats/clim_fill_stats.json
+grid_metadata:    data/processed/grid_metadata.json
+excluded_dates:   data/processed/excluded_dates.csv
+
+# ── QC Range Limits (configurable, update from product docs) ──
+qc_limits:
+  SST:   {min: -2.0,  max: 36.0}   # °C
+  SSS:   {min: 0.0,   max: 45.0}   # PSU
+  SSH:   {min: -2.0,  max: 2.0}    # m   (update from DUACS docs)
+  U_curr:{min: -3.0,  max: 3.0}    # m/s
+  V_curr:{min: -3.0,  max: 3.0}    # m/s
+  WindU: {min: -30.0, max: 30.0}   # m/s
+  WindV: {min: -30.0, max: 30.0}   # m/s
+
+# ── Missing-day exclusion threshold ──────────────────────────
+# A date is excluded ONLY if this fraction of ocean pixels is
+# invalid across ALL variables simultaneously.
+missing_day_threshold: 0.90   # 90% invalid → exclude
+
+# ── Ridge baseline ────────────────────────────────────────────
+ridge_alpha: 1.0   # regularization strength
+
+# ── Zarr storage ──────────────────────────────────────────────
+# Chunk sizes: measured and tuned during the dry run.
+# null = let zarr choose (entire axis); integer = explicit chunk size.
+# Document final choice in configs/zarr_decisions.md
+zarr_chunks:
+  surface:
+    time: 32
+    lat:  null
+    lon:  null
+  glorys:
+    time: 32
+    lat:  null
+    lon:  null
+  masks:
+    time: 32
+    lat:  null
+    lon:  null
+
+# ── GLORYS depth interpolation ────────────────────────────────
+glorys_interp:
+  method: "linear"          # scipy interp1d kind
+  extrapolate_tolerance_m: 1.0   # max tolerated extrapolation at 0m target

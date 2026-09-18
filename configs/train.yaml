@@ -1,0 +1,50 @@
+# ============================================================
+# OceanEmbed — Training Configuration (Phase 1)
+# ============================================================
+
+experiment_name: phase1_baseline
+
+# ── Reproducibility ───────────────────────────────────────────
+seed: 42
+
+# ── Batch / Memory ────────────────────────────────────────────
+# Conservative starting point. Increase to 8 after VRAM measurement
+# confirms headroom > 3 GB after first epoch.
+batch_size: 4
+grad_accumulation: 2    # effective batch = batch_size × grad_accumulation = 8
+
+# ── Precision ─────────────────────────────────────────────────
+# SAFE DEFAULT: fp32. Do not change until GPU verification sequence
+# in environment/env_verification.json confirms bf16 or fp16 support.
+# After verification: set to "bf16" or "fp16" as confirmed.
+precision: "fp32"
+
+# ── Optimiser ─────────────────────────────────────────────────
+optimizer: "adam"          # options: adam | adamw
+learning_rate: 1.0e-4
+weight_decay: 0.0          # use >0 with adamw if selected
+
+# ── LR Schedule ───────────────────────────────────────────────
+lr_scheduler: "cosine"     # CosineAnnealingLR
+lr_min: 1.0e-6             # minimum LR at end of cosine cycle
+
+# ── Training duration ─────────────────────────────────────────
+epochs: 100
+patience: 15               # early stopping patience on val loss
+
+# ── Gradient ─────────────────────────────────────────────────
+gradient_clip: 1.0         # max gradient norm (0 = disabled)
+
+# ── DataLoader ────────────────────────────────────────────────
+num_workers: 4
+pin_memory: true
+shuffle_train: true
+
+# ── Checkpointing ─────────────────────────────────────────────
+checkpoint_dir: checkpoints/phase1/
+save_top_k: 3              # keep top-k checkpoints by val loss
+resume_from: null          # set to checkpoint path to resume
+
+# ── Logging ───────────────────────────────────────────────────
+log_every_n_steps: 50
+val_every_n_epochs: 1
