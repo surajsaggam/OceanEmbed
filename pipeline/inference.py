@@ -1,5 +1,7 @@
 """
-inference package for OceanEmbed.
+pipeline/inference.py
+---------------------
+Re-exports the production OceanEmbed inference predictor and extraction utilities.
 """
 
 from inference.predictor import (
