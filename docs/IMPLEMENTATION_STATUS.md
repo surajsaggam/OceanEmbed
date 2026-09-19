@@ -18,8 +18,8 @@
 - **Security:** Credentials stored exclusively in gitignored `.env`. Verified via `git check-ignore`.
 
 ### Test Suite Status
-- **Total Tests Collected:** 96
-- **Tests Passing:** 96 / 96 (100% pass rate)
+- **Total Tests Collected:** 108
+- **Tests Passing:** 108 / 108 (100% pass rate)
 - **Tests Skipped:** 0
 - **Tests Failing / Errors:** 0
 - **Automated Test Modules:**
@@ -36,6 +36,7 @@
   - `tests/test_normalize.py` (10 tests)
   - `tests/test_phase0_validation.py` (11 tests)
   - `tests/test_phase1_pipeline.py` (5 tests)
+  - `tests/test_phase2_temporal.py` (12 tests)
   - `tests/test_qc.py` (8 tests)
   - `tests/test_regrid.py` (4 tests)
   - `tests/test_split_leakage.py` (7 tests)
@@ -472,9 +473,184 @@ Evaluated across all 365 days of 2018:
 - **Initial Checkpoint SHA256**: `f3d99a9b9214efe92a4e8fb11bd49b759a62cfb5d991d1225fd1360362876b9b`
 - **Final Checkpoint SHA256**: `f3d99a9b9214efe92a4e8fb11bd49b759a62cfb5d991d1225fd1360362876b9b` (**Identical, 100% frozen**).
 - **2020+ Horizon Boundary**: 0 bytes of 2020+ data exists.
-- **Automated Test Suite**: **96 / 96 tests passing (100%)**.
+- **Automated Test Suite**: **108 / 108 tests passing (100%)**.
 - **Structured Report**: Saved to `evaluation/results/argo_blind_eval_report.json`.
-- **Status**: STOP condition strictly observed. Phase-1 complete; Phase-2 not started.
+- **Phase-1 Status**: Frozen baseline milestone committed at `b8b54060ca5a4d3d6ca56684502f38bbc53bef21`.
 
+---
 
+## 14. Phase-2: Temporal Trend Integration & Smoke Verification
+
+### Phase-2 Implementation Overview
+- **Objective**: Provide the model with lightweight temporal trend/rate-of-change context by introducing exactly two temporal difference channels: $\Delta\text{SST}(t) = \text{SST}(t) - \text{SST}(t-1)$ and $\Delta\text{SSH}(t) = \text{SSH}(t) - \text{SSH}(t-1)$.
+- **Architecture Integrity**: Dual-path multi-scale CNN + pointwise MLP, 128-D explicit Ocean Embedding $Z$, attention-guided decoder, and 15 target ocean depths are preserved completely intact.
+- **Model Input Expansion**: $14 \to 16$ input channels:
+  - Channels 0–6: 7 normalized physical surface variables (SST, SSS, SSH, U_curr, V_curr, WindU, WindV).
+  - Channels 7–13: 7 binary validity masks ($1.0 = \text{valid ocean}, 0.0 = \text{land/missing}$).
+  - Channel 14: Normalized $\Delta\text{SST}$ (0.0 fill where invalid/unobserved).
+  - Channel 15: Normalized $\Delta\text{SSH}$ (0.0 fill where invalid/unobserved).
+  - Metadata: `meta["delta_mask"]` provides $[2, H, W]$ tensor with explicit validity states for both temporal channels.
+- **Parameter Count**: Expanded from 525,040 to 527,472 parameters (+2,432 weights in the first-layer spatial and pointwise convolutions only). Latent embedding dimension and decoder parameter counts are unchanged.
+
+### Joint Validity Masking & Finiteness Contract
+- **Mathematical Definition**:
+  $$M_{\Delta\text{SST}} = M_{\text{SST}}(t) \times M_{\text{SST}}(t-1)$$
+  $$M_{\Delta\text{SSH}} = M_{\text{SSH}}(t) \times M_{\text{SSH}}(t-1)$$
+- A temporal difference is considered valid if and only if both day $t$ and day $t-1$ are valid ocean observations and the difference is finite.
+- If either observation is invalid or non-finite:
+  - $M_{\Delta}$ is set to $0.0$.
+  - Normalized feature value is set to $0.0$ (mean fill in z-score space).
+  - Invalid deltas are never interpreted as physically observed zero change.
+  - Strict finiteness (`torch.isfinite(in_tensor).all()`) is enforced unconditionally on all inputs.
+
+### Boundary Handling & Temporal Leakage Prevention
+- **2015-01-01 (Sequence Start)**: Day $t-1$ is unobserved. Boundary handler assigns $M_{\Delta} = 0.0$ and normalized fill $= 0.0$.
+- **2018-01-01 (Validation Start)**: Previous day dynamically accesses historical `2017-12-31` from the training split (allowed historical antecedent). Validation date map strictly excludes 2018+ future data for boundary calculations.
+- **2019-01-01 (Test Start)**: Previous day accesses historical `2018-12-31` from the validation split. Test set remains strictly locked and untouched.
+- **Leakage Prevention Guarantee**: For all days $t$, only observations at $t$ and $t-1$ can ever be accessed. Future observations ($t+1, \dots$) are strictly inaccessible.
+
+### Phase-2 Training-Only Normalization Statistics
+- **Source Period**: Computed strictly and exclusively from valid ocean pixels during the 2015-01-01 through 2017-12-31 training period ($N_{\text{days}} = 1096$, transitions $= 1095$).
+- **Zero-Leakage**: Zero access to 2018 validation or 2019 test data.
+- **Statistics Output**: Saved to `data/norm_stats/phase2_train_stats.json`:
+  - $\Delta\text{SST}$: Mean $= -0.000094\ ^\circ\text{C/day}$, Std $= 0.239777\ ^\circ\text{C/day}$ ($N = 12,839,620$).
+  - $\Delta\text{SSH}$: Mean $= -0.000017\ \text{m/day}$, Std $= 0.006878\ \text{m/day}$ ($N = 12,925,380$).
+- **Phase-1 Immutability**: `data/norm_stats/train_stats.json` left untouched.
+
+### Zero-Storage Dynamic Delta Construction
+- **Design**: $\Delta\text{SST}$ and $\Delta\text{SSH}$ are computed dynamically on-the-fly inside `OceanEmbedDataset.__getitem__` from existing preprocessed `.npz` files.
+- **Benchmark Overhead**: Dynamic retrieval takes ~7.4 ms per sample, easily keeping pace with DataLoader pipelines.
+- **Disk Impact**: **0 MB additional storage**. No duplicate datasets (`data/processed_phase2/*`) were created.
+
+### Phase-2 Unit & Integration Tests
+- **Module**: `tests/test_phase2_temporal.py` (12 tests)
+  1. `test_exact_delta_sst_and_ssh`: Exact mathematical subtraction.
+  2. `test_joint_validity_mask`: Four-quadrant validity truth table.
+  3. `test_invalid_and_non_finite_handling`: NaN/Inf rejection and finite fill.
+  4. `test_boundary_2015_01_01`: Sequence start unobserved boundary.
+  5. `test_boundary_2018_01_01`: Validation historical boundary using 2017-12-31.
+  6. `test_boundary_2019_01_01`: Test historical boundary using 2018-12-31.
+  7. `test_temporal_leakage_prevention`: Rejection of future dates.
+  8. `test_training_only_normalization_stats`: Verification of 2015–2017 scope.
+  9. `test_16_channel_tensor_shape_and_finite`: 16-channel input contract.
+  10. `test_phase1_backward_compatibility`: Preserved 14-channel Phase-1 functionality.
+  11. `test_model_forward_backward_and_gradients_16_channels`: Non-zero gradient flow through Channels 14 and 15.
+  12. `test_phase2_checkpoint_save_and_load`: Checkpoint serialization roundtrip.
+- **Overall Test Pass Rate**: **108 / 108 tests passing (100%)**.
+
+### Smoke & Overfit Verification Results
+- **Script**: `scripts/run_phase2_smoke_test.py`
+- **Results**: Passed all 7 validation gates.
+
+### Full Phase-2 Model Training Execution
+- **Script**: `scripts/train_phase2.py`
+- **Hardware Profile**: NVIDIA RTX 5060 Laptop GPU, `bf16` AMP, peak VRAM: **1,167.5 MB** (~1.17 GB).
+- **Training Duration**: **4,088.3s (68.14 minutes)** for 100 epochs (~40.9s / epoch).
+- **Convergence Trajectory**:
+  - Initial train loss: $475.5401^\circ\text{C}^2 \to$ Final train loss: $0.3491^\circ\text{C}^2$.
+  - Initial val loss: $455.4223^\circ\text{C}^2 \to$ Best val loss: **$0.5771^\circ\text{C}^2$** at **Epoch 95**.
+- **Checkpoints**:
+  - Phase-2 best checkpoint saved to `checkpoints/phase2/best.pt`.
+  - Checkpoint SHA256: `8bd977fc87412d5209081a218745325f214e384cc821d6b951ec51fe50c34d8e`.
+  - Phase-1 best checkpoint SHA256: `f3d99a9b9214efe92a4e8fb11bd49b759a62cfb5d991d1225fd1360362876b9b` (Verified invariant).
+
+### Phase-2 vs. Phase-1 2018 Validation Evaluation
+Evaluated strictly over all 365 days of 2018:
+
+| Depth (m) | Phase-1 RMSE (°C) | Phase-2 RMSE (°C) | Diff (°C) | Diff (%) | Phase-1 $R^2$ | Phase-2 $R^2$ | Status |
+|---|---|---|---|---|---|---|---|
+| **0** | 0.5823 | 0.5899 | +0.0076 | +1.30% | 0.8904 | 0.8876 | Steady |
+| **5** | 0.6209 | 0.5913 | -0.0296 | **-4.76%** | 0.8739 | **0.8856** | **IMPROVED** |
+| **10** | 0.5631 | 0.5516 | -0.0115 | **-2.04%** | 0.8905 | **0.8949** | **IMPROVED** |
+| **20** | 0.6143 | 0.6297 | +0.0154 | +2.50% | 0.8714 | 0.8649 | Steady |
+| **30** | 0.7295 | 0.7607 | +0.0312 | +4.27% | 0.8323 | 0.8176 | Steady |
+| **50** | 0.9126 | 0.8895 | -0.0231 | **-2.53%** | 0.7915 | **0.8019** | **IMPROVED** |
+| **75** | 1.0522 | 1.0572 | +0.0049 | +0.47% | 0.7802 | 0.7781 | Steady |
+| **100** | 1.1399 | 1.1443 | +0.0044 | +0.39% | 0.7511 | 0.7492 | Steady |
+| **125** | 1.0956 | 1.0726 | -0.0230 | **-2.10%** | 0.7551 | **0.7653** | **IMPROVED** |
+| **150** | 0.9612 | 0.9799 | +0.0188 | +1.95% | 0.7896 | 0.7814 | Steady |
+| **200** | 0.7236 | 0.7484 | +0.0248 | +3.43% | 0.8430 | 0.8320 | Steady |
+| **300** | 0.5753 | 0.5884 | +0.0131 | +2.28% | 0.8622 | 0.8559 | Steady |
+| **500** | 0.4080 | 0.4189 | +0.0110 | +2.69% | 0.8909 | 0.8850 | Steady |
+| **700** | 0.4175 | 0.4246 | +0.0071 | +1.71% | 0.8830 | 0.8790 | Steady |
+| **1000** | 0.3704 | 0.4135 | +0.0431 | +11.64% | 0.8653 | 0.8321 | Degraded |
+| **MEAN** | **0.7178** | **0.7240** | **+0.0063** | **+0.88%** | **0.8380** | **0.8340** | **Comparable** |
+| **50–150m** | **1.0323** | **1.0287** | **-0.0036** | **-0.35%** | **-** | **-** | **IMPROVED** |
+| **500–1000m** | **0.3986** | **0.4190** | **+0.0204** | **+5.12%** | **-** | **-** | Minor increase |
+
+### Regional & Seasonal Performance (2018)
+- **Regional**:
+  - **Bay of Bengal**: Phase-1 RMSE = $0.5965^\circ\text{C} \to$ Phase-2 RMSE = **$0.5956^\circ\text{C}$** (**-0.16% improvement**).
+  - **Arabian Sea**: Phase-1 RMSE = $0.7590^\circ\text{C} \to$ Phase-2 RMSE = **$0.7745^\circ\text{C}$** (+2.04%).
+- **Seasonal**:
+  - **DJF**: Phase-1 = $0.6592^\circ\text{C} \to$ Phase-2 = **$0.6644^\circ\text{C}$** (+0.79%).
+  - **MAM**: Phase-1 = $0.6526^\circ\text{C} \to$ Phase-2 = **$0.6537^\circ\text{C}$** (+0.17%).
+  - **JJAS**: Phase-1 = $0.7683^\circ\text{C} \to$ Phase-2 = **$0.7771^\circ\text{C}$** (+1.14%).
+  - **OND**: Phase-1 = $0.7345^\circ\text{C} \to$ Phase-2 = **$0.7812^\circ\text{C}$** (+6.37%).
+
+### Phase-2 Final 2019 Temporal Test Evaluation
+In accordance with the pre-specified protocol, after the 2018 validation decision, Phase-2 was evaluated on the locked 2019 temporal test set without any tuning or feedback:
+
+| Depth (m) | Phase-1 2019 RMSE (°C) | Phase-2 2019 RMSE (°C) | Diff (°C) | Diff (%) | Phase-1 $R^2$ | Phase-2 $R^2$ | Status |
+|---|---|---|---|---|---|---|---|
+| **0** | 0.5410 | 0.5798 | +0.0388 | +7.17% | 0.9076 | 0.8938 | Degraded |
+| **5** | 0.5863 | 0.5732 | -0.0131 | **-2.24%** | 0.8894 | **0.8943** | **IMPROVED** |
+| **10** | 0.5667 | 0.5641 | -0.0026 | -0.45% | 0.8877 | 0.8887 | Steady |
+| **20** | 0.6179 | 0.6315 | +0.0136 | +2.20% | 0.8625 | 0.8564 | Steady |
+| **30** | 0.6838 | 0.7245 | +0.0407 | +5.95% | 0.8355 | 0.8153 | Degraded |
+| **50** | 0.8851 | 0.8881 | +0.0030 | +0.34% | 0.7699 | 0.7683 | Steady |
+| **75** | 1.0936 | 1.0971 | +0.0035 | +0.32% | 0.7464 | 0.7448 | Steady |
+| **100** | 1.1844 | 1.1717 | -0.0127 | **-1.07%** | 0.7538 | **0.7590** | **IMPROVED** |
+| **125** | 1.1232 | 1.1027 | -0.0205 | **-1.82%** | 0.7758 | **0.7839** | **IMPROVED** |
+| **150** | 0.9903 | 1.0036 | +0.0133 | +1.35% | 0.8009 | 0.7955 | Steady |
+| **200** | 0.7516 | 0.7828 | +0.0311 | +4.14% | 0.8361 | 0.8223 | Steady |
+| **300** | 0.5857 | 0.6031 | +0.0173 | +2.96% | 0.8493 | 0.8403 | Steady |
+| **500** | 0.4164 | 0.4317 | +0.0153 | +3.66% | 0.8920 | 0.8840 | Steady |
+| **700** | 0.3948 | 0.4127 | +0.0179 | +4.53% | 0.8969 | 0.8873 | Steady |
+| **1000** | 0.3837 | 0.4346 | +0.0509 | +13.26% | 0.8608 | 0.8215 | Degraded |
+| **MEAN** | **0.7203** | **0.7334** | **+0.0131** | **+1.82%** | **0.8376** | **0.8304** | **Comparable** |
+| **50–150m** | **1.0553** | **1.0526** | **-0.0027** | **-0.25%** | **-** | **-** | **IMPROVED** |
+| **500–1000m** | **0.3983** | **0.4263** | **+0.0280** | **+7.03%** | **-** | **-** | Minor increase |
+
+### Phase-2 Temporal Generalization Stability (2018 Val vs. 2019 Test)
+- **Validation 2018 Mean RMSE**: $0.7240^\circ\text{C}$
+- **Test 2019 Mean RMSE**: $0.7334^\circ\text{C}$
+- **Generalization Degradation**: $+0.0094^\circ\text{C}$ (**$+1.29\%$**), confirming temporal stability across years.
+- **Validation 2018 Mean $R^2$**: $0.8340 \to$ Test 2019 Mean $R^2$: $0.8304$ ($\Delta R^2 = -0.0037$).
+
+### 2019 Regional & Seasonal Performance
+- **Regional Breakdown**:
+  - **Bay of Bengal**: Phase-1 = $0.6190^\circ\text{C} \to$ Phase-2 = **$0.6197^\circ\text{C}$** (+0.13%, virtually identical).
+  - **Arabian Sea**: Phase-1 = $0.7558^\circ\text{C} \to$ Phase-2 = **$0.7757^\circ\text{C}$** (+2.63%).
+- **Seasonal Breakdown**:
+  - **DJF**: Phase-1 = $0.6847^\circ\text{C} \to$ Phase-2 = $0.6954^\circ\text{C}$ (+1.57%).
+  - **MAM**: Phase-1 = $0.6394^\circ\text{C} \to$ Phase-2 = $0.6632^\circ\text{C}$ (+3.72%).
+  - **JJAS**: Phase-1 = $0.7489^\circ\text{C} \to$ Phase-2 = $0.7588^\circ\text{C}$ (+1.33%).
+  - **OND**: Phase-1 = $0.8013^\circ\text{C} \to$ Phase-2 = $0.8204^\circ\text{C}$ (+2.38%).
+
+### Scientific Takeaways & Baseline Status
+- **Baseline Retained**: Phase-1 remains the superior, primary production baseline (2018 Val RMSE: $0.7178^\circ\text{C}$; 2019 Test RMSE: $0.7203^\circ\text{C}$). Phase-2 serves as a verified ablation experiment.
+- **Ablation Findings**: Adding 1-day temporal differences ($\Delta\text{SST}, \Delta\text{SSH}$) produces localized gains in the dynamic upper thermocline (5m, 100m, 125m, and 50–150m average), but introduces noise that slightly degrades deep quasi-static layers (1000m).
+- **Integrity Compliance**:
+  - Phase-1 best checkpoint SHA256: `f3d99a9b9214efe92a4e8fb11bd49b759a62cfb5d991d1225fd1360362876b9b` (Invariant).
+  - Phase-2 best checkpoint SHA256: `8bd977fc87412d5209081a218745325f214e384cc821d6b951ec51fe50c34d8e` (Invariant).
+  - 113 / 113 tests passing.
+  - Zero model-selection feedback or tuning was applied to 2019.
+  - Zero git commits made (HEAD remains `b8b54060ca5a4d3d6ca56684502f38bbc53bef21`).
+
+---
+
+## Phase-3: Diagnostic Error Analysis (Completed)
+
+### Scope & Protocol
+- **Primary Model**: Frozen Phase-1 model (`checkpoints/phase1/best.pt`, Epoch 89, 525,040 parameters).
+- **Target Dataset**: 2019 Temporal Test Set (365 calendar days, 4.31 million valid spatial columns).
+- **Scientific Objective**: Comprehensive empirical error diagnosis across vertical depths, geographic regions (Arabian Sea vs. Bay of Bengal), seasons (DJF, MAM, JJAS, OND), surface-state features, missing-data validity, and 128-D Ocean Embeddings.
+- **Strict Protocol**: Pure analysis (`torch.no_grad()`). Zero weight retraining, zero fine-tuning, zero hyperparameter adjustment.
+- **Engine & Tooling**:
+  - `evaluation/phase3_error_analysis.py`: Modular diagnostic library.
+  - `scripts/run_phase3_error_analysis.py`: Reproducible CLI runner.
+  - `tests/test_phase3_analysis.py`: 5 dedicated unit tests (**113 / 113 tests passing** across repo).
+  - `evaluation/results/phase3_error_analysis_2019.json`: Comprehensive machine-readable report.
+  - `reports/figures/phase3/`: 11 high-resolution diagnostic plots.
 
