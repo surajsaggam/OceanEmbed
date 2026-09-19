@@ -104,6 +104,14 @@ class TestInferenceIntegrity:
         for name, param in predictor.model.named_parameters():
             assert param.requires_grad is False, f"Parameter '{name}' must have requires_grad=False"
 
+    def test_cuda_inference_if_available(self, synthetic_14ch_input):
+        if torch.cuda.is_available():
+            pred_cuda = OceanEmbedPredictor(device="cuda")
+            res = pred_cuda.predict(synthetic_14ch_input)
+            assert res["temperature"].shape == (15, 101, 241)
+            assert np.all(np.isfinite(res["temperature"]))
+            assert res["metadata"]["device"] == "cuda"
+
 
 class TestInputHandling:
     """Tests 5-7: 14-channel contract, dict input, pre-formed input."""
@@ -216,6 +224,21 @@ class TestProfileExtraction:
         # Lon out of range (> 105.0)
         with pytest.raises(ValueError, match="outside the North Indian Ocean domain"):
             extract_profile(pred_res, lat=15.0, lon=110.0)
+
+    def test_boundary_geographic_coordinates(self, predictor, synthetic_7var_dict):
+        """Tests that points precisely at the 4 geographic bounds [5N, 30N, 45E, 105E] succeed."""
+        pred_res = predictor.predict(synthetic_7var_dict)
+        boundary_coords = [
+            (5.0, 65.0),    # Southern bound
+            (30.0, 65.0),   # Northern bound
+            (15.0, 45.0),   # Western bound
+            (15.0, 105.0),  # Eastern bound
+        ]
+        for b_lat, b_lon in boundary_coords:
+            prof = extract_profile(pred_res, lat=b_lat, lon=b_lon)
+            assert len(prof["depth_m"]) == 15
+            assert len(prof["temperature_C"]) == 15
+            assert np.all(np.isfinite(prof["temperature_C"]))
 
 
 class TestInvalidInputHandling:
