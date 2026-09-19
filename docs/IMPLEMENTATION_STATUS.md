@@ -57,7 +57,7 @@
 | **Initial Loss Function** | **Complete** | Plain uniform masked MSE over valid ocean pixels implemented in `models/losses.py` (`MaskedMSELoss`) and exported in `models/__init__.py`. |
 | **Training Pipeline** | **Complete** | `scripts/train_phase1.py` verified on GPU with bf16 AMP, AdamW, cosine annealing, validation loss tracking, and checkpointing to `checkpoints/phase1/best.pt`. |
 | **Evaluation Suite** | **Complete** | `scripts/evaluate_model.py` and `evaluation/metrics.py` evaluate checkpoints on test split, computing depth-wise RMSE, MAE, bias, Pearson $r$, and $R^2$ across all 15 depths. Results saved to `evaluation/results/model_results_jan2020.json`. |
-| **Argo Blind Evaluation Guard** | **Locked & Intact** | `argo_blind_locked: false` in `configs/eval.yaml`. Strictly isolated from preprocessing, tuning, and training. |
+| **Argo Blind Evaluation Guard** | **Restored & Intact** | `argo_blind_locked: false` in `configs/eval.yaml`. Argo data excluded from training, normalization, checkpoint selection, and tuning; runtime guard intentionally restored/disabled after blind validation. |
 | **Multi-Year Downloader & Safety Gate** | **Complete** | Implemented in `scripts/download_multiyear.py` with year chunking, dry-run audit, disk-space safety checks, and `pipeline/cleanup.py` verification gate. |
 | **Stage-1 2015 Acquisition & Preprocessing** | **Complete** | All 6 raw variables (28.68 GB) downloaded, inspected, and preprocessed into `data/interim/2015/` (365 days, 0.306 GB, [14, 101, 241], [15, 101, 241]). Moments saved to `data/norm_stats/moments_2015.json`. Verified 100%. |
 
@@ -356,7 +356,7 @@ Evaluated across all 365 days of 2018:
   - Target Mask: `[15, 101, 241]` binary $\{0.0, 1.0\}$.
   - 100% finite (zero NaNs, zero Infs across all 365 files).
 - **Depth Monotonicity & Bracket**: GLORYS depth coordinates extend to 1062.44 m; 1000 m target level has 8,911 valid points/day (36.6% ocean domain), exactly matching the 2015–2018 bathymetric ocean floor footprint without below-deepest extrapolation.
-- **Argo Isolation Guard**: Strictly locked (`argo_blind_locked: false`).
+- **Argo Isolation Guard**: Restored to default state (`argo_blind_locked: false`); intentionally restored/disabled after completion of blind validation.
 - **Forward Horizon Boundary**: 2020+ data does NOT exist (0 bytes acquired).
 - **Evaluation Status**: **COMPLETE**. Evaluated all 365 days of 2019 using frozen checkpoint `checkpoints/phase1/best.pt` (Epoch 89, 525,040 parameters). Full results saved to `evaluation/results/phase1_test2019_report.json`.
 

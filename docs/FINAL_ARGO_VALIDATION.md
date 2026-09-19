@@ -67,8 +67,8 @@ Averaged across all 15 standard depth levels over all 2,165 matched in-situ prof
 | **700** | 2,105 | 0.2672 | 0.2017 | -0.0560 | 0.9707 | 0.9392 | 0.2182 |
 | **1000** | 2,019 | 0.2437 | 0.1922 | -0.0517 | 0.9664 | 0.9286 | 0.2034 |
 
-*\*Physical note on 0 m RMSE:*  
-Argo CTD pumps are systematically shut down at $\approx 2–5\text{ m}$ depth to prevent surface oil and air ingestion; the in-situ 0 m value is a near-surface bulk mixed-layer extrapolation. In contrast, satellite radiometers measure the upper sub-millimeter thermal skin layer, which exhibits large diurnal warming spikes ($+1^\circ\text{C}$ to $+4^\circ\text{C}$). Notice that both OceanEmbed ($3.0817^\circ$C) and GLORYS ($3.0736^\circ$C) exhibit identical behavior, while the MAE at 0 m is only $0.6527^\circ$C. Immediately below the skin layer (at 5 m), RMSE plunges to $1.0314^\circ$C, reaching $0.2437^\circ$C at 1000 m.
+*\*Note on 0 m RMSE:*  
+The large 0-m discrepancy is consistent with differences between satellite/reanalysis surface representation and the measurement depth of Argo profiles. Notice that both OceanEmbed ($3.0817^\circ$C) and GLORYS ($3.0736^\circ$C) exhibit identical behavior, while the MAE at 0 m is only $0.6527^\circ$C. Immediately below the surface layer (at 5 m), RMSE plunges to $1.0314^\circ$C, reaching $0.2437^\circ$C at 1000 m.
 
 ---
 
@@ -107,19 +107,20 @@ To maintain strict scientific integrity and avoid overclaiming:
 2. **Non-Uniform Accuracy Across Depth:**  
    Accuracy varies by vertical regime:
    - Deep ocean (500–1000 m): Exceptionally accurate ($0.24^\circ\text{C}$ to $0.27^\circ\text{C}$ RMSE, $R^2 > 0.92$).
-   - Upper thermocline (75–150 m): Represents the primary error region ($\approx 1.05^\circ\text{C}$ to $1.12^\circ\text{C}$ RMSE) due to vertical gradient steepness.
-   - Surface skin (0 m): Discrepancies reflect skin-versus-bulk diurnal physics rather than neural network failure.
+   - Upper/intermediate subsurface (75–150 m): The larger errors in the upper/intermediate subsurface indicate limitations in reconstructing subsurface variability from surface observations alone. These errors were not consistently reduced by the tested temporal-delta or gradient-aware ablations.
+   - Surface (0 m): The large 0-m discrepancy is consistent with differences between satellite/reanalysis surface representation and the measurement depth of Argo profiles.
 3. **No Causal Physical Mechanisms Claimed:**  
    The model maps correlated spatial patterns of surface expression (SST, SSS, SLA, wind, currents) to subsurface thermal structure. It does not integrate the Navier-Stokes equations or assert physical causation.
 4. **No Forecasting Capability Claimed:**  
    This framework performs diagnostic reconstruction of the contemporary water column from concurrent surface observations. It is not an ocean forecasting system.
-5. **Strict Data Hygiene Confirmed:**  
-   Argo in-situ data was **never used** for:
-   - Model training
-   - Input normalization or statistics
-   - Hyperparameter selection
-   - Early stopping or patience monitoring
-   - Model selection or ablation comparison
+5. **Strict Data Hygiene & Isolation Guard Confirmed:**  
+   Argo in-situ data was strictly isolated throughout the development lifecycle:
+   - Argo data were excluded from training.
+   - Argo data were excluded from normalization.
+   - Argo data were excluded from checkpoint selection.
+   - Argo data were excluded from model tuning.
+   - Blind validation was performed only after the model was frozen.
+   - Any runtime guard (`argo_blind_locked`) was intentionally restored/disabled after completion of the blind validation.
 
 ---
 

@@ -50,12 +50,11 @@ Implemented in [pipeline/argo_pipeline.py](file:///d:/OceanEmbed/pipeline/argo_p
   - If the shallowest raw reading $p_{\min} \le 5.0\text{ dbar}$, the reading is extended to $0\text{ m}$ (and $5\text{ m}$ if $p_{\min} \in (0, 5]$).
   - If $p_{\min} > 5.0\text{ dbar}$, levels $0\text{ m}$ and $5\text{ m}$ remain `NaN` and are flagged unobserved.
   - This explains why exactly **1,721 profiles** have observations at $0\text{ m}$ and $5\text{ m}$, while **2,160 profiles** are valid at $50–150\text{ m}$ (444 floats initiated pumping deeper than $5\text{ dbar}$).
-- **Physical Reason for 0 m RMSE Discrepancy**:
+- **Interpretation of 0 m Discrepancy**:
   - At $0\text{ m}$, OceanEmbed RMSE is $3.0817^\circ\text{C}$ and GLORYS RMSE is $3.0736^\circ\text{C}$.
-  - **Argo Float Hardware Behavior**: Core Argo float CTD pumps are systematically disabled at $\sim 2–5\text{ m}$ depth as floats ascend to avoid ingesting surface air, surfactants, and biofouling oils into the conductivity cell. The "0 m" Argo temperature is therefore a near-surface bulk mixed-layer extrapolation.
-  - **Satellite SST Observation Physics**: Satellite infrared radiometers (OSTIA SST channel 0) measure the upper sub-millimeter thermal skin layer, which undergoes pronounced diurnal warming ($+1.5^\circ\text{C}$ to $+4.0^\circ\text{C}$) during calm daylight periods.
-  - **MAE vs. RMSE Diagnostic**: The MAE at $0\text{ m}$ is only **$0.6527^\circ\text{C}$**. The elevated RMSE is an artifact of squaring infrequent, high-amplitude diurnal skin-versus-bulk thermal excursions.
-  - **Subsurface Convergence**: At $5\text{ m}$, RMSE immediately plunges to **$1.0314^\circ\text{C}$**, further decreasing to **$0.7946^\circ\text{C}$** at $30\text{ m}$ and **$0.2437^\circ\text{C}$** at $1000\text{ m}$.
+  - The large 0-m discrepancy is consistent with differences between satellite/reanalysis surface representation and the measurement depth of Argo profiles.
+  - The MAE at $0\text{ m}$ is only **$0.6527^\circ\text{C}$**.
+  - At $5\text{ m}$, RMSE immediately plunges to **$1.0314^\circ\text{C}$**, further decreasing to **$0.7946^\circ\text{C}$** at $30\text{ m}$ and **$0.2437^\circ\text{C}$** at $1000\text{ m}$.
 
 ---
 
@@ -145,9 +144,14 @@ The following figures have been inspected and confirmed valid:
 
 ## 7. Compliance & Scientific Gate Verification
 
-1. **No Data Leakage**:
+1. **Strict Data Hygiene & Isolation Lifecycle**:
    - `train_stats.json` remained frozen to 2015–2017 training observations.
-   - Argo in-situ float data was never seen by the model during training, hyperparameter tuning, or validation.
+   - Argo data were excluded from training.
+   - Argo data were excluded from normalization.
+   - Argo data were excluded from checkpoint selection.
+   - Argo data were excluded from model tuning.
+   - Blind validation was performed only after the model was frozen.
+   - Any runtime guard (`argo_blind_locked`) was intentionally restored/disabled after completion of the blind validation.
 2. **Checkpoint Integrity**:
    - Pre-audit SHA256: `f3d99a9b9214efe92a4e8fb11bd49b759a62cfb5d991d1225fd1360362876b9b`
    - Post-audit SHA256: `f3d99a9b9214efe92a4e8fb11bd49b759a62cfb5d991d1225fd1360362876b9b`

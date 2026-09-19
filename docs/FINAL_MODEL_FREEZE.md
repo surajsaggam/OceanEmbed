@@ -68,4 +68,4 @@ Informative ablation only; not selected as primary model.
 1. **Frozen Checkpoint:** The Phase-1 checkpoint file remains 100% read-only and immutable.
 2. **Zero Temporal Leakage:** Neither 2018 nor 2019 data was ever accessible or utilized during model training (trained strictly on 2015–2017).
 3. **Inference Purity:** All test and validation evaluations are strictly zero-gradient (`torch.no_grad()`), evaluation mode (`model.eval()`), with no optimizer state active.
-4. **Argo Independence:** The blind in-situ Argo validation remains completely isolated from training, hyperparameter selection, and checkpoint selection.
+4. **Argo Independence & Lifecycle:** Argo data were excluded from training, normalization, checkpoint selection, and model tuning. Blind validation was performed only after the model was frozen, and any runtime guard (`argo_blind_locked`) was intentionally restored/disabled after completion of the blind validation.

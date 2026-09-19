@@ -109,7 +109,7 @@ Structured dictionary containing:
 ## 10. Known Scientific Limitations
 
 1. **Diagnostic Reconstruction, Not a Forecast:** OceanEmbed diagnoses contemporary subsurface structure from concurrent satellite observations; it is not a predictive forecast model.
-2. **Thermocline Peak Uncertainty:** Accuracy is highest in the deep ocean ($< 0.28^\circ\text{C}$ RMSE at 500–1000 m) and lowest in the steep thermocline (75–150 m, $\sim 1.1^\circ\text{C}$ RMSE).
+2. **Subsurface Limitations:** Accuracy is highest in the deep ocean ($< 0.28^\circ\text{C}$ RMSE at 500–1000 m). The larger errors in the upper/intermediate subsurface indicate limitations in reconstructing subsurface variability from surface observations alone. These errors were not consistently reduced by the tested temporal-delta or gradient-aware ablations.
 3. **Not In-Situ Truth:** The model provides statistical inference from surface satellite signatures. It complements, but does not replace, in-situ profiling floats (Argo) or moorings.
 
 ---

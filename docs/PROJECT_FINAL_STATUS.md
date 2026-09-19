@@ -143,19 +143,19 @@ Evaluated against 2,165 quality-controlled in-situ Argo profiling floats (569,21
   - Deep ocean (500–1000 m): **0.24°C to 0.27°C RMSE** ($R^2 > 0.92$).
   - Thermocline layer (75–150 m): **1.00°C to 1.12°C RMSE** ($R^2 \approx 0.60–0.68$).
   - Near-surface (5–30 m): **0.79°C to 1.06°C RMSE** ($R^2 \approx 0.58–0.68$).
-  - Surface skin (0 m): Elevated RMSE ($3.08^\circ$C) due to diurnal skin-warming physics (matching GLORYS at $3.07^\circ$C), with MAE of only $0.6527^\circ$C.
+  - Surface (0 m): Elevated RMSE ($3.08^\circ$C) matching GLORYS ($3.07^\circ$C), with MAE of only $0.6527^\circ$C. The large 0-m discrepancy is consistent with differences between satellite/reanalysis surface representation and the measurement depth of Argo profiles.
 - **Regional Performance:**
   - Bay of Bengal (700 profiles): **0.7362°C RMSE**
   - Arabian Sea (1,465 profiles): **1.0280°C RMSE**
 
-*(Note: Argo floats provide physical in-situ truth. Argo was strictly excluded from training, normalization, hyperparameter tuning, early stopping, and model selection).*
+*(Note: Argo floats provide physical in-situ truth. Argo data were excluded from training, excluded from normalization, excluded from checkpoint selection, and excluded from model tuning. Blind validation was performed only after the model was frozen, and the runtime guard was intentionally restored/disabled after completion of the blind validation).*
 
 ---
 
 ## 10. Important Scientific Limitations
 
 1. **Not a Replacement for In-Situ Sensors:** OceanEmbed is an empirical mapping system. It complements, but does not replace, in-situ profiling floats, CTDs, or oceanographic moorings.
-2. **Non-Uniform Vertical Accuracy:** Performance is non-uniform across the water column: error is lowest in the deep ocean ($< 0.28^\circ$C) and highest in the steep main thermocline (75–150 m, $\sim 1.1^\circ$C).
+2. **Non-Uniform Vertical Accuracy:** Performance is non-uniform across the water column: error is lowest in the deep ocean ($< 0.28^\circ$C). The larger errors in the upper/intermediate subsurface indicate limitations in reconstructing subsurface variability from surface observations alone. These errors were not consistently reduced by the tested temporal-delta or gradient-aware ablations.
 3. **No Dynamical Equations or Causality:** The neural network exploits statistical pattern correlations between surface variables and vertical thermal structures; it does not solve the Navier-Stokes equations or assert physical causality.
 4. **No Forecast Capability:** OceanEmbed performs diagnostic reconstruction of contemporary ocean state from concurrent satellite observations; it is not a predictive forecast model.
 
@@ -167,5 +167,11 @@ Evaluated against 2,165 quality-controlled in-situ Argo profiling floats (569,21
 - **Phase-1 Checkpoint Hash:** `f3d99a9b9214efe92a4e8fb11bd49b759a62cfb5d991d1225fd1360362876b9b` (**Verified invariant**).
 - **Phase-2 Checkpoint Hash:** `8bd977fc87412d5209081a218745325f214e384cc821d6b951ec51fe50c34d8e` (**Verified invariant**).
 - **Phase-4A Checkpoint Hash:** `eb2e1e1272d3695a9fabf0932306838c5e6893a87d71306283bde0968a57f7c3` (**Verified invariant**).
-- **Automated Test Suite:** **124 / 124 tests passing (100% pass rate in 16.62s)**.
-- **Argo Runtime Guard:** Restored to default locked state (`argo_blind_locked: false` in `configs/eval.yaml`).
+- **Automated Test Suite:** **144 / 144 tests passing (100% pass rate)**.
+- **Argo Runtime Guard:** Restored to default state (`argo_blind_locked: false` in `configs/eval.yaml`). The runtime guard was intentionally restored/disabled after completion of the blind validation.
+
+---
+
+## 12. Final ML Status Declaration
+
+"Additional training is not justified by the completed experimental evidence. The Phase-1 model is frozen unless a new project requirement or new scientific evidence is introduced."

@@ -108,8 +108,13 @@ $$\mathcal{D} = [0, 5, 10, 20, 30, 50, 75, 100, 125, 150, 200, 300, 500, 700, 10
 - **Status:** **COMPLETED & LOCKED**.
 - **Dataset:** 2,165 quality-controlled in-situ Argo profiling floats (569,215 raw soundings) from INCOIS ERDDAP across all 365 days of 2019.
 - **Overall Mean In-Situ RMSE:** **0.9514°C** across all 15 depths (GLORYS reference: $0.8157^\circ$C).
-- **Deep Ocean Fidelity (500–1000m):** **0.24°C to 0.27°C RMSE** ($R^2 > 0.92$).
-- **Isolation Guard:** Restored to default locked state (`argo_blind_locked: false` in `configs/eval.yaml`).
+- **Isolation Guard & Data Hygiene:**
+  - Argo data were excluded from training.
+  - Argo data were excluded from normalization.
+  - Argo data were excluded from checkpoint selection.
+  - Argo data were excluded from model tuning.
+  - Blind validation was performed only after the model was frozen.
+  - Any runtime guard (`argo_blind_locked`) was intentionally restored/disabled after completion of the blind validation.
 - **Ablations:** Phase-2 ($\Delta\text{SST} + \Delta\text{SSH}$) and Phase-4A (gradient-aware loss) evaluated as informative controlled ablations; neither displaced Phase-1 as the primary model.
 
 ---
@@ -171,7 +176,7 @@ argo_obs = lookup_argo_profile(date="2019-06-15", lat=15.0, lon=65.0)
 ## 10. Known Scientific Limitations
 
 1. **Diagnostic Reconstruction:** OceanEmbed infers contemporary subsurface thermal structure from concurrent surface satellite observations; it does not forecast future ocean states.
-2. **Thermocline Uncertainty Peak:** Error is non-uniform vertically, peaking in the high-gradient thermocline layer (75–150 m, $\sim 1.1^\circ\text{C}$ RMSE) and reaching minimal error in the deep ocean ($< 0.28^\circ\text{C}$ RMSE at 500–1000 m).
+2. **Subsurface Limitations:** Error is non-uniform vertically, reaching minimal error in the deep ocean ($< 0.28^\circ\text{C}$ RMSE at 500–1000 m). The larger errors in the upper/intermediate subsurface indicate limitations in reconstructing subsurface variability from surface observations alone. These errors were not consistently reduced by the tested temporal-delta or gradient-aware ablations. The large 0-m discrepancy is consistent with differences between satellite/reanalysis surface representation and the measurement depth of Argo profiles.
 3. **Statistical Mapping:** The framework maps statistical spatial correlations between surface expressions and subsurface water columns; it does not solve the primitive Navier-Stokes equations.
 
 ---
@@ -180,5 +185,5 @@ argo_obs = lookup_argo_profile(date="2019-06-15", lat=15.0, lon=65.0)
 
 > [!IMPORTANT]
 > The OceanEmbed machine learning model, weights, preprocessing rules, and evaluation baselines are **OFFICIALLY FROZEN**.
-> No further retraining, architectural modifications, loss function experiments, or data acquisitions will take place.
+> Additional training is not justified by the completed experimental evidence. The Phase-1 model is frozen unless a new project requirement or new scientific evidence is introduced.
 > The ML layer is ready for full production integration by the frontend and backend engineering teams.
