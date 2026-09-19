@@ -1,0 +1,511 @@
+{
+  "analysis_scope": "Phase-3 Vertical-Gradient & Profile-Displacement Diagnostic",
+  "dataset": "2019 Temporal Test Set (365 calendar days)",
+  "checkpoint_sha256": "f3d99a9b9214efe92a4e8fb11bd49b759a62cfb5d991d1225fd1360362876b9b",
+  "phase2_checkpoint_sha256": "8bd977fc87412d5209081a218745325f214e384cc821d6b951ec51fe50c34d8e",
+  "decision_gate": {
+    "category": "B. PARTIAL SUPPORT",
+    "justification": "Evidence suggests a gradient relationship, but more evidence or a carefully scoped experiment is needed. Correlation: r = +0.352, \u03c1 = +0.322; mean gradient smoothing: -0.5%.",
+    "pearson_r_gradient_vs_temp_error": 0.3519911545996385,
+    "spearman_rho_gradient_vs_temp_error": 0.32223048860805026,
+    "mean_50_150m_gradient_smoothing_pct": -0.5160951869458974
+  },
+  "layer_gradient_metrics": {
+    "0-50m": {
+      "mae": 0.024119610638282243,
+      "rmse": 0.03606244704572259,
+      "bias": 0.0018539747751651087,
+      "target_mean_abs_grad": 0.023052351952360033,
+      "pred_mean_abs_grad": 0.02773953178231818,
+      "valid_count": 20282320
+    },
+    "50-150m": {
+      "mae": 0.020244355884845588,
+      "rmse": 0.026690308034031506,
+      "bias": -8.625650541144259e-05,
+      "target_mean_abs_grad": 0.08986450832906549,
+      "pred_mean_abs_grad": 0.08989912882786666,
+      "valid_count": 14213100
+    },
+    "150-300m": {
+      "mae": 0.006957237891127036,
+      "rmse": 0.009841186613573714,
+      "bias": 0.00025439054062486845,
+      "target_mean_abs_grad": 0.04061337829532515,
+      "pred_mean_abs_grad": 0.040309522761126974,
+      "valid_count": 6930985
+    },
+    "300-500m": {
+      "mae": 0.0018069628865941163,
+      "rmse": 0.002590569566091149,
+      "bias": -0.00039670713522881073,
+      "target_mean_abs_grad": 0.009302772688958216,
+      "pred_mean_abs_grad": 0.009645480116603851,
+      "valid_count": 3388295
+    },
+    "500-1000m": {
+      "mae": 0.0009728602079517312,
+      "rmse": 0.001393948945947825,
+      "bias": -7.943495243272549e-06,
+      "target_mean_abs_grad": 0.007049638361539771,
+      "pred_mean_abs_grad": 0.0070528338076129,
+      "valid_count": 6586790
+    }
+  },
+  "interval_gradient_metrics": {
+    "0-5m": {
+      "midpoint_m": 2.5,
+      "delta_z_m": 5.0,
+      "gradient_mae": 0.029185853898525238,
+      "gradient_rmse": 0.03973233699798584,
+      "gradient_bias": 0.022798283025622368,
+      "target_mean_abs_grad": 0.017778320237994194,
+      "pred_mean_abs_grad": 0.019617263227701187,
+      "valid_count": 4307730
+    },
+    "5-10m": {
+      "midpoint_m": 7.5,
+      "delta_z_m": 5.0,
+      "gradient_mae": 0.017239345237612724,
+      "gradient_rmse": 0.033147528767585754,
+      "gradient_bias": 0.0023445591796189547,
+      "target_mean_abs_grad": 0.009171716868877411,
+      "pred_mean_abs_grad": 0.013705133460462093,
+      "valid_count": 4179250
+    },
+    "10-20m": {
+      "midpoint_m": 15.0,
+      "delta_z_m": 10.0,
+      "gradient_mae": 0.021892733871936798,
+      "gradient_rmse": 0.03428326174616814,
+      "gradient_bias": -0.006213505286723375,
+      "target_mean_abs_grad": 0.016004320234060287,
+      "pred_mean_abs_grad": 0.021449649706482887,
+      "valid_count": 4070480
+    },
+    "20-30m": {
+      "midpoint_m": 25.0,
+      "delta_z_m": 10.0,
+      "gradient_mae": 0.027491707354784012,
+      "gradient_rmse": 0.038381144404411316,
+      "gradient_bias": -0.009304165840148926,
+      "target_mean_abs_grad": 0.028911080211400986,
+      "pred_mean_abs_grad": 0.03865629807114601,
+      "valid_count": 3950760
+    },
+    "30-50m": {
+      "midpoint_m": 40.0,
+      "delta_z_m": 20.0,
+      "gradient_mae": 0.024827713146805763,
+      "gradient_rmse": 0.03406912460923195,
+      "gradient_bias": -0.002213496947661042,
+      "target_mean_abs_grad": 0.045911356806755066,
+      "pred_mean_abs_grad": 0.04790728539228439,
+      "valid_count": 3774100
+    },
+    "50-75m": {
+      "midpoint_m": 62.5,
+      "delta_z_m": 25.0,
+      "gradient_mae": 0.02462037280201912,
+      "gradient_rmse": 0.03161292150616646,
+      "gradient_bias": -0.005232043098658323,
+      "target_mean_abs_grad": 0.06982025504112244,
+      "pred_mean_abs_grad": 0.07471822947263718,
+      "valid_count": 3624450
+    },
+    "75-100m": {
+      "midpoint_m": 87.5,
+      "delta_z_m": 25.0,
+      "gradient_mae": 0.020902158692479134,
+      "gradient_rmse": 0.02724231407046318,
+      "gradient_bias": 2.8432425096980296e-05,
+      "target_mean_abs_grad": 0.09501925855875015,
+      "pred_mean_abs_grad": 0.09512823820114136,
+      "valid_count": 3548530
+    },
+    "100-125m": {
+      "midpoint_m": 112.5,
+      "delta_z_m": 25.0,
+      "gradient_mae": 0.01916630007326603,
+      "gradient_rmse": 0.0251301396638155,
+      "gradient_bias": 0.003162938402965665,
+      "target_mean_abs_grad": 0.10437668859958649,
+      "pred_mean_abs_grad": 0.10121279954910278,
+      "valid_count": 3528455
+    },
+    "125-150m": {
+      "midpoint_m": 137.5,
+      "delta_z_m": 25.0,
+      "gradient_mae": 0.01614629477262497,
+      "gradient_rmse": 0.021617168560624123,
+      "gradient_bias": 0.001844175742007792,
+      "target_mean_abs_grad": 0.09076210856437683,
+      "pred_mean_abs_grad": 0.08891581743955612,
+      "valid_count": 3511665
+    },
+    "150-200m": {
+      "midpoint_m": 175.0,
+      "delta_z_m": 50.0,
+      "gradient_mae": 0.009477476589381695,
+      "gradient_rmse": 0.012527466751635075,
+      "gradient_bias": 0.0009140758193098009,
+      "target_mean_abs_grad": 0.05626920610666275,
+      "pred_mean_abs_grad": 0.05534818768501282,
+      "valid_count": 3481735
+    },
+    "200-300m": {
+      "midpoint_m": 250.0,
+      "delta_z_m": 100.0,
+      "gradient_mae": 0.004413263406604528,
+      "gradient_rmse": 0.006016190629452467,
+      "gradient_bias": -0.00041150764445774257,
+      "target_mean_abs_grad": 0.024810103699564934,
+      "pred_mean_abs_grad": 0.025129225105047226,
+      "valid_count": 3449250
+    },
+    "300-500m": {
+      "midpoint_m": 400.0,
+      "delta_z_m": 200.0,
+      "gradient_mae": 0.0018069628858938813,
+      "gradient_rmse": 0.0025905694346874952,
+      "gradient_bias": -0.00039670715341344476,
+      "target_mean_abs_grad": 0.009302772581577301,
+      "pred_mean_abs_grad": 0.009645480662584305,
+      "valid_count": 3388295
+    },
+    "500-700m": {
+      "midpoint_m": 600.0,
+      "delta_z_m": 200.0,
+      "gradient_mae": 0.001165819470770657,
+      "gradient_rmse": 0.0016438442980870605,
+      "gradient_bias": 4.1349023376824334e-05,
+      "target_mean_abs_grad": 0.007305358536541462,
+      "pred_mean_abs_grad": 0.007254704367369413,
+      "valid_count": 3334275
+    },
+    "700-1000m": {
+      "midpoint_m": 850.0,
+      "delta_z_m": 300.0,
+      "gradient_mae": 0.0007750504883006215,
+      "gradient_rmse": 0.001079296343959868,
+      "gradient_bias": -5.847509601153433e-05,
+      "target_mean_abs_grad": 0.0067874896340072155,
+      "pred_mean_abs_grad": 0.006845889613032341,
+      "valid_count": 3252515
+    }
+  },
+  "gradient_vs_error_correlation": {
+    "full_column": {
+      "pearson_r": 0.3519911545996385,
+      "pearson_p": 0.0,
+      "spearman_rho": 0.32223048860805026,
+      "spearman_p": 0.0,
+      "sample_count": 504189,
+      "bins": [
+        {
+          "bin_low": 0.0,
+          "bin_high": 0.00105457310564816,
+          "grad_mean": 0.0003620271414701598,
+          "mae_mean": 0.3821133819915107,
+          "mae_median": 0.2955780029296875,
+          "rmse": 0.5178660115872794,
+          "count": 50418
+        },
+        {
+          "bin_low": 0.00105457310564816,
+          "bin_high": 0.004835417680442335,
+          "grad_mean": 0.0027206501968271286,
+          "mae_mean": 0.4017879200378896,
+          "mae_median": 0.3042421340942383,
+          "rmse": 0.5575415850335813,
+          "count": 50420
+        },
+        {
+          "bin_low": 0.004835417680442335,
+          "bin_high": 0.007110780570656061,
+          "grad_mean": 0.006155402329748974,
+          "mae_mean": 0.30258553994520243,
+          "mae_median": 0.21734237670898438,
+          "rmse": 0.4378375406362675,
+          "count": 50419
+        },
+        {
+          "bin_low": 0.007110780570656061,
+          "bin_high": 0.009376971051096918,
+          "grad_mean": 0.008092930931505959,
+          "mae_mean": 0.3017164223177903,
+          "mae_median": 0.2188587188720703,
+          "rmse": 0.43173077124613213,
+          "count": 50419
+        },
+        {
+          "bin_low": 0.009376971051096918,
+          "bin_high": 0.019111156463623047,
+          "grad_mean": 0.01324939754495599,
+          "mae_mean": 0.4275810273079791,
+          "mae_median": 0.3011589050292969,
+          "rmse": 0.6214801809261259,
+          "count": 50418
+        },
+        {
+          "bin_low": 0.019111156463623047,
+          "bin_high": 0.0335784465074539,
+          "grad_mean": 0.025841445476274823,
+          "mae_mean": 0.5157873781890799,
+          "mae_median": 0.3734169006347656,
+          "rmse": 0.7269346839095888,
+          "count": 50419
+        },
+        {
+          "bin_low": 0.0335784465074539,
+          "bin_high": 0.055767814069986335,
+          "grad_mean": 0.04461571354487043,
+          "mae_mean": 0.6324207543707316,
+          "mae_median": 0.4716958999633789,
+          "rmse": 0.8702507067108173,
+          "count": 50419
+        },
+        {
+          "bin_low": 0.055767814069986335,
+          "bin_high": 0.08025979846715929,
+          "grad_mean": 0.06735871844453978,
+          "mae_mean": 0.7030568010414221,
+          "mae_median": 0.5398750305175781,
+          "rmse": 0.9445399662245237,
+          "count": 50419
+        },
+        {
+          "bin_low": 0.08025979846715929,
+          "bin_high": 0.1145231157541275,
+          "grad_mean": 0.0964737827062368,
+          "mae_mean": 0.7845934689093422,
+          "mae_median": 0.6276645660400391,
+          "rmse": 1.0263345205632182,
+          "count": 50419
+        },
+        {
+          "bin_low": 0.1145231157541275,
+          "bin_high": 0.7746608853340149,
+          "grad_mean": 0.14739543704155353,
+          "mae_mean": 0.9001145966336402,
+          "mae_median": 0.7271270751953125,
+          "rmse": 1.1647869756374873,
+          "count": 50419
+        }
+      ]
+    },
+    "subsurface_50_150m": {
+      "pearson_r": 0.023754456189746836,
+      "pearson_p": 1.1082402700611106e-19,
+      "spearman_rho": 0.0229924520004819,
+      "spearman_p": 1.543057058589064e-18,
+      "sample_count": 146000,
+      "bins": [
+        {
+          "bin_low": 0.0,
+          "bin_high": 0.0360916699282825,
+          "grad_mean": 0.018903962785794776,
+          "mae_mean": 0.8612087627567657,
+          "mae_median": 0.6647062301635742,
+          "rmse": 1.1561169880354394,
+          "count": 18250
+        },
+        {
+          "bin_low": 0.0360916699282825,
+          "bin_high": 0.05695138033479452,
+          "grad_mean": 0.04726400903561344,
+          "mae_mean": 0.8218732714195774,
+          "mae_median": 0.6373872756958008,
+          "rmse": 1.0969977803654876,
+          "count": 18250
+        },
+        {
+          "bin_low": 0.05695138033479452,
+          "bin_high": 0.07328878436237574,
+          "grad_mean": 0.0652391917442214,
+          "mae_mean": 0.8259875762625917,
+          "mae_median": 0.6563739776611328,
+          "rmse": 1.085655687616223,
+          "count": 18250
+        },
+        {
+          "bin_low": 0.07328878436237574,
+          "bin_high": 0.089019775390625,
+          "grad_mean": 0.08114298587996666,
+          "mae_mean": 0.8168923699888464,
+          "mae_median": 0.6566448211669922,
+          "rmse": 1.0657901953497193,
+          "count": 18250
+        },
+        {
+          "bin_low": 0.089019775390625,
+          "bin_high": 0.10452636517584324,
+          "grad_mean": 0.09677511985497932,
+          "mae_mean": 0.8058776704971105,
+          "mae_median": 0.6466012001037598,
+          "rmse": 1.048831056004089,
+          "count": 18250
+        },
+        {
+          "bin_low": 0.10452636517584324,
+          "bin_high": 0.12113218195736408,
+          "grad_mean": 0.112570826103426,
+          "mae_mean": 0.8070993180993485,
+          "mae_median": 0.6443576812744141,
+          "rmse": 1.0464957109584563,
+          "count": 18250
+        },
+        {
+          "bin_low": 0.12113218195736408,
+          "bin_high": 0.14365148544311523,
+          "grad_mean": 0.13167744017504665,
+          "mae_mean": 0.8115371262014729,
+          "mae_median": 0.656977653503418,
+          "rmse": 1.0472364450248492,
+          "count": 18250
+        },
+        {
+          "bin_low": 0.14365148544311523,
+          "bin_high": 0.3917863368988037,
+          "grad_mean": 0.16698856063493311,
+          "mae_mean": 0.9161335567840159,
+          "mae_median": 0.7407045364379883,
+          "rmse": 1.1804148328775252,
+          "count": 18250
+        }
+      ]
+    }
+  },
+  "profile_displacement": {
+    "eligible_profile_count": 5874,
+    "qualification_criteria": {
+      "min_eval_depth_m": 200.0,
+      "min_peak_gradient_degC_per_m": 0.03
+    },
+    "discrete_displacement": {
+      "mean_m": 1.0814606741573034,
+      "median_m": 0.0,
+      "mean_abs_m": 17.9677391896493,
+      "median_abs_m": 10.0,
+      "histogram": {
+        "-172.5": 23,
+        "-160.0": 3,
+        "-150.0": 3,
+        "-135.0": 2,
+        "-122.5": 4,
+        "-112.5": 12,
+        "-97.5": 25,
+        "-87.5": 11,
+        "-85.0": 1,
+        "-75.0": 23,
+        "-72.5": 33,
+        "-62.5": 17,
+        "-50.0": 82,
+        "-47.5": 17,
+        "-37.5": 131,
+        "-25.0": 848,
+        "-22.5": 93,
+        "-15.0": 52,
+        "-10.0": 3,
+        "0.0": 2908,
+        "7.5": 1,
+        "10.0": 31,
+        "15.0": 103,
+        "17.5": 12,
+        "22.5": 112,
+        "25.0": 881,
+        "32.5": 2,
+        "37.5": 28,
+        "47.5": 36,
+        "50.0": 172,
+        "55.0": 3,
+        "62.5": 11,
+        "72.5": 38,
+        "75.0": 53,
+        "80.0": 4,
+        "85.0": 2,
+        "87.5": 16,
+        "97.5": 41,
+        "105.0": 1,
+        "110.0": 6,
+        "112.5": 18,
+        "122.5": 1,
+        "135.0": 10,
+        "172.5": 1
+      }
+    },
+    "subgrid_displacement": {
+      "mean_m": 1.75655157408532,
+      "median_m": 1.3200164306908846,
+      "mean_abs_m": 24.411701903795205,
+      "median_abs_m": 16.082275030203164,
+      "std_m": 35.741712714169765
+    },
+    "correlation_displacement_vs_temperature_error": {
+      "pearson_r_abs_disp_vs_mae": 0.1787481196784934,
+      "spearman_rho_abs_disp_vs_mae": 0.16237874220629267,
+      "pearson_r_abs_disp_vs_rmse": 0.1797934066704115
+    },
+    "resolution_caveats": "The standard 15-depth grid has 25m interval spacing between 50m and 150m. Discrete displacement estimates are quantized in steps of +/-25m. Subgrid estimates use 3-point parabolic interpolation but remain constrained by grid resolution."
+  },
+  "subsurface_75_150m_gradient_smoothing": {
+    "50-75m": {
+      "target_mag": 0.06982025504112244,
+      "pred_mag": 0.07471822947263718,
+      "ratio_pred_to_target": 1.0701511965063712,
+      "underestimation_pct": -7.015119650637125,
+      "gradient_mae": 0.02462037280201912
+    },
+    "75-100m": {
+      "target_mag": 0.09501925855875015,
+      "pred_mag": 0.09512823820114136,
+      "ratio_pred_to_target": 1.0011469216245654,
+      "underestimation_pct": -0.11469216245654223,
+      "gradient_mae": 0.020902158692479134
+    },
+    "100-125m": {
+      "target_mag": 0.10437668859958649,
+      "pred_mag": 0.10121279954910278,
+      "ratio_pred_to_target": 0.9696877809314193,
+      "underestimation_pct": 3.0312219068580726,
+      "gradient_mae": 0.01916630007326603
+    },
+    "125-150m": {
+      "target_mag": 0.09076210856437683,
+      "pred_mag": 0.08891581743955612,
+      "ratio_pred_to_target": 0.97965790841548,
+      "underestimation_pct": 2.034209158452005,
+      "gradient_mae": 0.01614629477262497
+    }
+  },
+  "representative_profiles": {
+    "1. Low-Error Profile": {
+      "date": "2019-02-15",
+      "lat": 8.25,
+      "lon": 89.0,
+      "col_mae": 0.08200432360172272,
+      "peak_target_grad": 0.15417419373989105
+    },
+    "2. High-Error Profile": {
+      "date": "2019-07-15",
+      "lat": 25.0,
+      "lon": 60.25,
+      "col_mae": 3.913761615753174,
+      "peak_target_grad": 0.2382597029209137
+    },
+    "3. High-Gradient / Low-Error": {
+      "date": "2019-01-16",
+      "lat": 5.75,
+      "lon": 89.0,
+      "col_mae": 0.2953592538833618,
+      "peak_target_grad": 0.16712868213653564
+    },
+    "4. High-Gradient / High-Error": {
+      "date": "2019-11-12",
+      "lat": 6.25,
+      "lon": 67.5,
+      "col_mae": 0.9062873721122742,
+      "peak_target_grad": 0.18956077098846436
+    }
+  }
+}
