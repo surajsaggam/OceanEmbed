@@ -63,6 +63,16 @@ class TestBaselines:
         corr = np.corrcoef(pred[0].ravel(), Y[0].ravel())[0, 1]
         assert corr > 0.95, f"Expected strong correlation, got {corr}"
 
+    def test_cnn_only_baseline(self):
+        from models.cnn_baseline import CNNOnlyBaseline
+        model = CNNOnlyBaseline()
+        x = torch.randn(2, 14, 16, 24)
+        out = model(x)
+        assert "temperature" in out
+        assert "embedding" in out
+        assert out["temperature"].shape == (2, 15, 16, 24)
+        assert out["embedding"].shape == (2, 128, 16, 24)
+
 
 class TestMetrics:
     def test_depth_metrics_exact(self):

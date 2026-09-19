@@ -7,7 +7,7 @@ data/
 checkpoints/
 
 # ── Results (derived, reproducible from code + data) ───────────────────────
-results/
+/results/
 
 # ── Python environment ──────────────────────────────────────────────────────
 .venv/

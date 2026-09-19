@@ -1,0 +1,9 @@
+{
+  "embedding_dim": 128,
+  "sample_tensors_analyzed": 32,
+  "total_active_channels": 128,
+  "mean_spatial_std": 0.3743491768836975,
+  "min_spatial_std": 0.053121425211429596,
+  "max_spatial_std": 0.986835777759552,
+  "mode_collapse_detected": false
+}

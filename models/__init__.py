@@ -3,6 +3,7 @@ models package for OceanEmbed.
 """
 
 from models.attention_decoder import AttentionGate2D, AttentionGuidedDecoder
+from models.cnn_baseline import CNNOnlyBaseline
 from models.embedding import OceanEmbeddingFusion
 from models.losses import MaskedMSELoss
 from models.multi_scale_cnn import MultiScaleSpatialCNN
@@ -16,5 +17,6 @@ __all__ = [
     "AttentionGate2D",
     "AttentionGuidedDecoder",
     "OceanEmbedNet",
+    "CNNOnlyBaseline",
     "MaskedMSELoss",
 ]

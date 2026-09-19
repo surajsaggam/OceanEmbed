@@ -26,8 +26,9 @@ from utils.config import load_config
 
 def evaluate_checkpoint(
     checkpoint_path: str = "checkpoints/phase1/best.pt",
-    split: str = "test",
-    output_json: str = "evaluation/results/model_results_jan2020.json",
+    split: str = "val",
+    output_json: str = "evaluation/results/oceanembed_val2018_metrics.json",
+    batch_size: int = 8,
 ) -> dict:
     print("=" * 75)
     print(f"OceanEmbed — Evaluating Checkpoint: {checkpoint_path} on '{split}' split")
@@ -42,11 +43,11 @@ def evaluate_checkpoint(
     depths = list(data_cfg.depths_m)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Evaluation device: {device}")
+    print(f"Evaluation device: {device} | Batch Size: {batch_size}")
 
     # Load dataset
     ds = OceanEmbedDataset(split=split, fallback_to_synthetic=False)
-    loader = create_dataloader(ds, batch_size=1, shuffle=False)
+    loader = create_dataloader(ds, batch_size=batch_size, shuffle=False)
     print(f"Loaded {len(ds)} samples for '{split}' split.")
 
     # Load model
@@ -107,8 +108,14 @@ def evaluate_checkpoint(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate OceanEmbed Checkpoint")
     parser.add_argument("--checkpoint", type=str, default="checkpoints/phase1/best.pt")
-    parser.add_argument("--split", type=str, default="test")
-    parser.add_argument("--output", type=str, default="evaluation/results/model_results_jan2020.json")
+    parser.add_argument("--split", type=str, default="val")
+    parser.add_argument("--output", type=str, default="evaluation/results/oceanembed_val2018_metrics.json")
+    parser.add_argument("--batch-size", type=int, default=8)
     args = parser.parse_args()
 
-    evaluate_checkpoint(checkpoint_path=args.checkpoint, split=args.split, output_json=args.output)
+    evaluate_checkpoint(
+        checkpoint_path=args.checkpoint,
+        split=args.split,
+        output_json=args.output,
+        batch_size=args.batch_size,
+    )

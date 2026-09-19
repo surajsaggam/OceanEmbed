@@ -15,8 +15,10 @@ Scientific and training protocol:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import random
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -99,13 +101,21 @@ def run_training(
 
     checkpoint_dir = Path(train_cfg.checkpoint_dir)
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    results_dir = Path("evaluation/results")
+    results_dir.mkdir(parents=True, exist_ok=True)
+    history_path = results_dir / "phase1_training_history.json"
 
     best_val_loss = float("inf")
+    best_epoch = 0
     patience_counter = 0
+    best_ckpt_path = checkpoint_dir / "best.pt"
+    history = []
+    train_start_time = time.time()
 
     print(f"[Training] Starting {max_epochs} epochs...")
 
     for epoch in range(1, max_epochs + 1):
+        epoch_start = time.time()
         model.train()
         train_loss_accum = 0.0
         n_batches = 0
@@ -146,6 +156,7 @@ def run_training(
             n_batches += 1
 
         avg_train_loss = train_loss_accum / max(1, n_batches)
+        current_lr = scheduler.get_last_lr()[0]
         scheduler.step()
 
         # Validation
@@ -166,13 +177,33 @@ def run_training(
                 val_batches += 1
 
         avg_val_loss = val_loss_accum / max(1, val_batches)
-        print(f"Epoch [{epoch:03d}/{max_epochs:03d}] Train Loss: {avg_train_loss:.4f} | Val Loss: {avg_val_loss:.4f} | LR: {scheduler.get_last_lr()[0]:.2e}")
+        epoch_dur = time.time() - epoch_start
+        peak_vram_mb = (torch.cuda.max_memory_allocated() / (1024 ** 2)) if torch.cuda.is_available() else 0.0
+
+        print(
+            f"Epoch [{epoch:03d}/{max_epochs:03d}] "
+            f"Train Loss: {avg_train_loss:.4f} | "
+            f"Val Loss: {avg_val_loss:.4f} | "
+            f"LR: {current_lr:.2e} | "
+            f"Dur: {epoch_dur:.1f}s | "
+            f"Peak VRAM: {peak_vram_mb:.1f} MB"
+        )
+
+        epoch_record = {
+            "epoch": epoch,
+            "train_loss": float(avg_train_loss),
+            "val_loss": float(avg_val_loss),
+            "learning_rate": float(current_lr),
+            "duration_s": float(epoch_dur),
+            "peak_vram_mb": float(peak_vram_mb),
+        }
+        history.append(epoch_record)
 
         # Checkpoint if best
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss
+            best_epoch = epoch
             patience_counter = 0
-            best_ckpt_path = checkpoint_dir / "best.pt"
             torch.save(
                 {
                     "epoch": epoch,
@@ -184,14 +215,33 @@ def run_training(
                 },
                 best_ckpt_path,
             )
-            print(f"  -> Saved new best checkpoint to {best_ckpt_path} (val_loss: {avg_val_loss:.4f})")
+            print(f"  -> Saved new best checkpoint to {best_ckpt_path} (epoch {best_epoch}, val_loss: {avg_val_loss:.4f})")
         else:
             patience_counter += 1
             if patience_counter >= train_cfg.patience:
                 print(f"[Training] Early stopping triggered after {patience_counter} epochs without improvement.")
                 break
 
-    print(f"[Training] Finished. Best Val Loss: {best_val_loss:.4f}")
+        # Save history incrementally
+        summary_payload = {
+            "experiment_name": train_cfg.experiment_name,
+            "best_epoch": best_epoch,
+            "best_val_loss": float(best_val_loss),
+            "checkpoint_path": str(best_ckpt_path),
+            "total_duration_s": float(time.time() - train_start_time),
+            "peak_vram_mb": float(peak_vram_mb),
+            "epochs_completed": epoch,
+            "history": history,
+        }
+        with open(history_path, "w", encoding="utf-8") as f:
+            json.dump(summary_payload, f, indent=2)
+
+    total_training_time = time.time() - train_start_time
+    print(f"\n[Training] Finished in {total_training_time:.1f}s ({total_training_time / 60.0:.2f} min).")
+    print(f"  Best Epoch: {best_epoch} | Best Val Loss: {best_val_loss:.4f}")
+    print(f"  Checkpoint Path: {best_ckpt_path}")
+    print(f"  Peak GPU Memory: {peak_vram_mb:.1f} MB")
+    print(f"  History saved to: {history_path}")
 
 
 if __name__ == "__main__":

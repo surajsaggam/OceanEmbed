@@ -1,0 +1,132 @@
+{
+  "dataset_name": "Indian_ARGO_Floats (INCOIS ERDDAP)",
+  "source_url": "https://erddap.incois.gov.in/erddap/tabledap/Indian_ARGO_Floats",
+  "spatial_domain": {
+    "lat_min": 5.0,
+    "lat_max": 30.0,
+    "lon_min": 45.0,
+    "lon_max": 105.0
+  },
+  "temporal_horizon": {
+    "year": 2019,
+    "start": "2019-01-01",
+    "end": "2019-12-31"
+  },
+  "inventory": {
+    "total_profiles": 2434,
+    "unique_active_floats": 70,
+    "arabian_sea_profiles": 1644,
+    "bay_of_bengal_profiles": 790,
+    "equatorial_profiles": 0,
+    "monthly_breakdown": [
+      {
+        "month": "Jan 2019",
+        "profiles": 169,
+        "unique_floats": 53,
+        "arabian_sea": 123,
+        "bay_of_bengal": 46,
+        "query_sec": 0.37
+      },
+      {
+        "month": "Feb 2019",
+        "profiles": 152,
+        "unique_floats": 50,
+        "arabian_sea": 111,
+        "bay_of_bengal": 41,
+        "query_sec": 0.24
+      },
+      {
+        "month": "Mar 2019",
+        "profiles": 165,
+        "unique_floats": 49,
+        "arabian_sea": 126,
+        "bay_of_bengal": 39,
+        "query_sec": 0.26
+      },
+      {
+        "month": "Apr 2019",
+        "profiles": 169,
+        "unique_floats": 49,
+        "arabian_sea": 127,
+        "bay_of_bengal": 42,
+        "query_sec": 0.77
+      },
+      {
+        "month": "May 2019",
+        "profiles": 212,
+        "unique_floats": 64,
+        "arabian_sea": 157,
+        "bay_of_bengal": 55,
+        "query_sec": 0.71
+      },
+      {
+        "month": "Jun 2019",
+        "profiles": 233,
+        "unique_floats": 64,
+        "arabian_sea": 150,
+        "bay_of_bengal": 83,
+        "query_sec": 0.51
+      },
+      {
+        "month": "Jul 2019",
+        "profiles": 240,
+        "unique_floats": 63,
+        "arabian_sea": 155,
+        "bay_of_bengal": 85,
+        "query_sec": 0.36
+      },
+      {
+        "month": "Aug 2019",
+        "profiles": 219,
+        "unique_floats": 62,
+        "arabian_sea": 142,
+        "bay_of_bengal": 77,
+        "query_sec": 0.52
+      },
+      {
+        "month": "Sep 2019",
+        "profiles": 213,
+        "unique_floats": 59,
+        "arabian_sea": 135,
+        "bay_of_bengal": 78,
+        "query_sec": 0.64
+      },
+      {
+        "month": "Oct 2019",
+        "profiles": 223,
+        "unique_floats": 59,
+        "arabian_sea": 140,
+        "bay_of_bengal": 83,
+        "query_sec": 0.47
+      },
+      {
+        "month": "Nov 2019",
+        "profiles": 217,
+        "unique_floats": 60,
+        "arabian_sea": 139,
+        "bay_of_bengal": 78,
+        "query_sec": 0.55
+      },
+      {
+        "month": "Dec 2019",
+        "profiles": 222,
+        "unique_floats": 59,
+        "arabian_sea": 139,
+        "bay_of_bengal": 83,
+        "query_sec": 0.32
+      }
+    ]
+  },
+  "storage_estimation": {
+    "estimated_measurements": 170380,
+    "estimated_raw_payload_mb": 178.27,
+    "estimated_processed_storage_mb": 15.45,
+    "storage_impact_pct": "< 0.02%"
+  },
+  "access_protocol": {
+    "protocol": "ERDDAP tabledap RESTful API over HTTPS",
+    "ssl_requirement": "Requires internal CA / unverified SSL context due to Indian National CA certificate authority",
+    "auth_required": false,
+    "rate_limits": "Moderate (recommend 1-month chunked requests)"
+  }
+}
