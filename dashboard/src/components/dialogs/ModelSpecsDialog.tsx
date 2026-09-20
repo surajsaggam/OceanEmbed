@@ -26,7 +26,7 @@ export const ModelSpecsDialog: React.FC<ModelSpecsDialogProps> = ({
             Institutional Research Specification · MoES / INCOIS
           </div>
           <DialogTitle className="text-lg font-medium tracking-tight text-[#0d253d]">
-            OceanEmbed Architecture & Scientific Methodology
+            OceanIQ Architecture & Scientific Methodology
           </DialogTitle>
           <DialogDescription className="text-xs text-[#64748d]">
             Satellite-Embedding-Based Deep Learning Framework for Reconstruction of Subsurface Ocean Temperature
@@ -133,7 +133,7 @@ export const ModelSpecsDialog: React.FC<ModelSpecsDialogProps> = ({
 
           {/* Guardrail Warning */}
           <div className="p-3 rounded-lg bg-[#f8fafc] border border-[#e2e8f0] text-xs text-[#64748d]">
-            <b className="text-[#0d253d]">Scientific Guardrail:</b> OceanEmbed reconstructs subsurface thermal structure from multi-source satellite surface observations. It complements sparse in-situ arrays but does not replace Argo floats, moorings, or research vessels.
+            <b className="text-[#0d253d]">Scientific Guardrail:</b> OceanIQ reconstructs subsurface thermal structure from multi-source satellite surface observations. It complements sparse in-situ arrays but does not replace Argo floats, moorings, or research vessels.
           </div>
         </div>
       </DialogContent>
