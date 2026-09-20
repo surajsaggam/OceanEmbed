@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { ChevronDown, Check, Loader2 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { ChevronDown, Check, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { OCEAN_PRESETS } from '@/data/presets';
 import { isWithinNioDomain, OBSERVATION_DATE_RANGE } from '@/lib/ocean';
@@ -30,7 +32,25 @@ export const TargetingStationBar: React.FC<TargetingStationBarProps> = ({
   onSelectPreset,
 }) => {
   const [presetsOpen, setPresetsOpen] = useState(false);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const isValid = isWithinNioDomain(latitude, longitude);
+
+  const selectedDate = useMemo(() => {
+    if (!date) return undefined;
+    const [y, m, d] = date.split('-').map(Number);
+    if (!y || !m || !d) return undefined;
+    return new Date(y, m - 1, d);
+  }, [date]);
+
+  const handleSelectDate = (newDate: Date | undefined) => {
+    if (newDate) {
+      const year = newDate.getFullYear();
+      const month = String(newDate.getMonth() + 1).padStart(2, '0');
+      const day = String(newDate.getDate()).padStart(2, '0');
+      onDateChange(`${year}-${month}-${day}`);
+      setDatePickerOpen(false);
+    }
+  };
 
   const activePreset = OCEAN_PRESETS.find(
     (p) =>
@@ -55,23 +75,40 @@ export const TargetingStationBar: React.FC<TargetingStationBarProps> = ({
         {/* Date Input */}
         <div>
           <label
-            htmlFor="target-date-input"
+            htmlFor="target-date-trigger"
             className="block text-[13px] font-medium text-[#64748d] mb-1 uppercase tracking-wider"
           >
             Observation Date
           </label>
-          <input
-            id="target-date-input"
-            type="date"
-            value={date}
-            min={OBSERVATION_DATE_RANGE.min}
-            max={OBSERVATION_DATE_RANGE.max}
-            onChange={(e) => onDateChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={loading}
-            className="h-9 px-3 rounded-md border border-[#cbd5e1] bg-white text-[#0d253d] font-mono text-sm tabular-nums focus:outline-none focus:border-[#533afd] focus:ring-1 focus:ring-[#533afd] transition-all disabled:opacity-50 cursor-pointer"
-            aria-label="Observation Date"
-          />
+          <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+            <PopoverTrigger asChild>
+              <button
+                id="target-date-trigger"
+                type="button"
+                disabled={loading}
+                className="h-9 px-3 rounded-md border border-[#cbd5e1] bg-white text-[#0d253d] font-mono text-sm tabular-nums flex items-center justify-between gap-2.5 hover:border-[#94a3b8] focus:outline-none focus:border-[#533afd] focus:ring-1 focus:ring-[#533afd] transition-all disabled:opacity-50 cursor-pointer select-none"
+                aria-label="Observation Date"
+              >
+                <span>{date}</span>
+                <CalendarIcon className="size-4 text-[#64748d]" aria-hidden="true" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-auto p-1 bg-white border border-[#e3e8ee] shadow-lg rounded-xl z-50"
+              align="start"
+            >
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={handleSelectDate}
+                defaultMonth={selectedDate}
+                startMonth={new Date(OBSERVATION_DATE_RANGE.min)}
+                endMonth={new Date(OBSERVATION_DATE_RANGE.max)}
+                captionLayout="dropdown"
+                className="rounded-lg"
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Latitude Input */}
@@ -200,8 +237,8 @@ export const TargetingStationBar: React.FC<TargetingStationBarProps> = ({
           >
             {loading ? (
               <>
-                <Loader2 className="size-3.5 animate-spin mr-1.5" />
-                <span>Reconstructing...</span>
+                <Spinner data-icon="inline-start" />
+                <span>Reconstructing…</span>
               </>
             ) : (
               <>
