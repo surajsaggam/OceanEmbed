@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "shadcn": {
+      "command": "npx",
+      "args": [
+        "shadcn@latest",
+        "mcp",
+        "--cwd",
+        "dashboard"
+      ]
+    },
+    "21st": {
+      "serverUrl": "https://21st.dev/api/mcp"
+    }
+  }
+}

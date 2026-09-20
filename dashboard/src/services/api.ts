@@ -1,0 +1,83 @@
+/**
+ * Typed API Client for OceanEmbed FastAPI backend.
+ */
+
+import type {
+  HealthResponse,
+  ReconstructionRequest,
+  ReconstructionResponse,
+  EmbeddingScatterResponse,
+  ArgoObservation,
+} from '../types/api';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
+
+export class ApiError extends Error {
+  status: number;
+  detail: string;
+
+  constructor(status: number, detail: string) {
+    super(`API Error (${status}): ${detail}`);
+    this.name = 'ApiError';
+    this.status = status;
+    this.detail = detail;
+  }
+}
+
+async function handleResponse<T>(response: Response): Promise<T> {
+  if (!response.ok) {
+    let errorDetail = 'Unknown server error';
+    try {
+      const data = await response.json();
+      if (typeof data.detail === 'string') {
+        errorDetail = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        errorDetail = data.detail.map((e: any) => `${e.loc?.join('.')} ${e.msg}`).join('; ');
+      } else {
+        errorDetail = JSON.stringify(data);
+      }
+    } catch {
+      errorDetail = response.statusText;
+    }
+    throw new ApiError(response.status, errorDetail);
+  }
+  return response.json() as Promise<T>;
+}
+
+export async function fetchHealth(): Promise<HealthResponse> {
+  const response = await fetch(`${API_BASE_URL}/health`);
+  return handleResponse<HealthResponse>(response);
+}
+
+export async function reconstructProfile(
+  request: ReconstructionRequest
+): Promise<ReconstructionResponse> {
+  const response = await fetch(`${API_BASE_URL}/reconstruct`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(request),
+  });
+  return handleResponse<ReconstructionResponse>(response);
+}
+
+export async function fetchEmbeddingScatter(): Promise<EmbeddingScatterResponse> {
+  const response = await fetch(`${API_BASE_URL}/embedding`);
+  return handleResponse<EmbeddingScatterResponse>(response);
+}
+
+export async function fetchNearbyArgo(
+  date: string,
+  latitude: number,
+  longitude: number
+): Promise<ArgoObservation | null> {
+  const params = new URLSearchParams({
+    date,
+    latitude: latitude.toString(),
+    longitude: longitude.toString(),
+  });
+  const response = await fetch(`${API_BASE_URL}/argo/nearby?${params.toString()}`);
+  return handleResponse<ArgoObservation | null>(response);
+}
