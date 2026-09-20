@@ -1,4 +1,5 @@
 import React from 'react';
+import { Table } from '@heroui/react';
 import { calculateVectorKinematics } from '@/lib/ocean';
 import type { SurfaceContext } from '@/types/api';
 
@@ -100,43 +101,57 @@ export const SurfaceDriversPanel: React.FC<SurfaceDriversPanelProps> = ({
       </div>
 
       {/* Publication-Quality Scientific Data Table */}
-      <div className="rounded-lg border border-[#e3e8ee] bg-white overflow-x-auto">
-        <table className="w-full text-left text-sm border-collapse">
-          <thead>
-            <tr className="border-b border-[#e2e8f0] bg-[#f8fafc] text-[#64748d] font-sans">
-              <th className="py-2.5 px-4 font-medium">Parameter</th>
-              <th className="py-2.5 px-3 font-medium">Symbol</th>
-              <th className="py-2.5 px-4 font-medium text-right">Observed Value</th>
-              <th className="py-2.5 px-3 font-medium">Unit</th>
-              <th className="py-2.5 px-4 font-medium">Sensor / Platform</th>
-              <th className="py-2.5 px-4 font-medium">Physical Role in Inversion</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#f1f5f9] text-[#273951]">
-            {observations.map((obs) => (
-              <tr key={obs.symbol} className="hover:bg-[#f8fafc] transition-colors">
-                <td className="py-2.5 px-4 font-medium text-[#0d253d] whitespace-nowrap">
-                  {obs.name}
-                </td>
-                <td className="py-2.5 px-3 font-mono text-[13px] text-[#64748d] whitespace-nowrap">
-                  {obs.symbol}
-                </td>
-                <td className="py-2.5 px-4 font-mono font-semibold text-[#0d253d] text-right tabular-nums whitespace-nowrap">
-                  {obs.value}
-                </td>
-                <td className="py-2.5 px-3 text-[#64748d] whitespace-nowrap">
-                  {obs.unit}
-                </td>
-                <td className="py-2.5 px-4 text-[#475569] whitespace-nowrap">
-                  {obs.source}
-                </td>
-                <td className="py-2.5 px-4 text-[#64748d] text-[13px] leading-relaxed max-w-md">
-                  {obs.role}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="rounded-lg border border-[#e3e8ee] bg-white overflow-hidden">
+        <Table>
+          <Table.ScrollContainer>
+            <Table.Content aria-label="Multi-Source Satellite Surface Observations" className="w-full min-w-[700px] text-left text-sm border-collapse">
+              <Table.Header>
+                <Table.Column isRowHeader className="py-2.5 px-4 font-medium text-[#64748d] bg-[#f8fafc] border-b border-[#e2e8f0] text-left font-sans">
+                  Parameter
+                </Table.Column>
+                <Table.Column className="py-2.5 px-3 font-medium text-[#64748d] bg-[#f8fafc] border-b border-[#e2e8f0] text-left font-sans">
+                  Symbol
+                </Table.Column>
+                <Table.Column className="py-2.5 px-4 font-medium text-[#64748d] bg-[#f8fafc] border-b border-[#e2e8f0] text-right font-sans">
+                  Observed Value
+                </Table.Column>
+                <Table.Column className="py-2.5 px-3 font-medium text-[#64748d] bg-[#f8fafc] border-b border-[#e2e8f0] text-left font-sans">
+                  Unit
+                </Table.Column>
+                <Table.Column className="py-2.5 px-4 font-medium text-[#64748d] bg-[#f8fafc] border-b border-[#e2e8f0] text-left font-sans">
+                  Sensor / Platform
+                </Table.Column>
+                <Table.Column className="py-2.5 px-4 font-medium text-[#64748d] bg-[#f8fafc] border-b border-[#e2e8f0] text-left font-sans">
+                  Physical Role in Inversion
+                </Table.Column>
+              </Table.Header>
+              <Table.Body className="divide-y divide-[#f1f5f9] text-[#273951]">
+                {observations.map((obs) => (
+                  <Table.Row key={obs.symbol} id={obs.symbol} className="hover:bg-[#f8fafc] transition-colors border-b border-[#f1f5f9]">
+                    <Table.Cell className="py-2.5 px-4 font-medium text-[#0d253d] whitespace-nowrap">
+                      {obs.name}
+                    </Table.Cell>
+                    <Table.Cell className="py-2.5 px-3 font-mono text-[13px] text-[#64748d] whitespace-nowrap">
+                      {obs.symbol}
+                    </Table.Cell>
+                    <Table.Cell className="py-2.5 px-4 font-mono font-semibold text-[#0d253d] text-right tabular-nums whitespace-nowrap">
+                      {obs.value}
+                    </Table.Cell>
+                    <Table.Cell className="py-2.5 px-3 text-[#64748d] whitespace-nowrap">
+                      {obs.unit}
+                    </Table.Cell>
+                    <Table.Cell className="py-2.5 px-4 text-[#475569] whitespace-nowrap">
+                      {obs.source}
+                    </Table.Cell>
+                    <Table.Cell className="py-2.5 px-4 text-[#64748d] text-[13px] leading-relaxed max-w-md">
+                      {obs.role}
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table.Content>
+          </Table.ScrollContainer>
+        </Table>
       </div>
 
       {/* Derived Kinematics Strip */}
