@@ -17,7 +17,6 @@ export function App() {
     loading,
     error,
     clearError,
-    health,
     reconstruction,
     scatterData,
     executeReconstruction,
@@ -52,11 +51,11 @@ export function App() {
   };
 
   return (
-    <div className="h-screen bg-[#f6f9fc] text-[#0d253d] flex flex-col font-sans selection:bg-[#533afd]/15 selection:text-[#533afd] overflow-hidden">
+    <div className="min-h-screen bg-[#f6f9fc] text-[#0d253d] flex flex-col font-sans selection:bg-[#533afd]/15 selection:text-[#533afd]">
       {/* Global Application Header */}
-      <AppHeader health={health} reconstruction={reconstruction} />
+      <AppHeader />
 
-      {/* Targeting Station & Date Specification Bar */}
+      {/* Targeting Station & Date Specification Bar (Controls — scrolls with page) */}
       <TargetingStationBar
         date={date}
         latitude={latitude}
@@ -92,17 +91,15 @@ export function App() {
         </div>
       )}
 
-      {/* Main Analysis Workbench — fills remaining viewport height, scrolls internally */}
-      <div className="flex-1 overflow-y-auto">
-        <AnalysisWorkbench
-          latitude={latitude}
-          longitude={longitude}
-          loading={loading}
-          reconstruction={reconstruction}
-          scatterData={scatterData}
-          onSelectCoordinates={handleSelectCoordinates}
-        />
-      </div>
+      {/* Main Analysis Workbench (Map, Profile, Diagnostics — scrolls with page) */}
+      <AnalysisWorkbench
+        latitude={latitude}
+        longitude={longitude}
+        loading={loading}
+        reconstruction={reconstruction}
+        scatterData={scatterData}
+        onSelectCoordinates={handleSelectCoordinates}
+      />
     </div>
   );
 }
