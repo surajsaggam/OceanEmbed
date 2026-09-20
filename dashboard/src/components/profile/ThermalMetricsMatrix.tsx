@@ -23,31 +23,31 @@ export const ThermalMetricsMatrix: React.FC<ThermalMetricsMatrixProps> = ({
 
   return (
     <div
-      className="w-full rounded-xl border border-[#e3e8ee] bg-white overflow-hidden shadow-xs"
+      className="w-full h-full rounded-xl border border-[#e3e8ee] bg-white flex flex-col overflow-hidden shadow-xs"
       style={{ maxHeight }}
     >
-      <Table className="h-full">
-        <Table.ScrollContainer className="overflow-y-auto" style={{ maxHeight }}>
-          <Table.Content aria-label="15 Standard Depths Thermal Sounding Matrix" className="w-full text-left text-sm border-collapse">
+      <Table className="w-full h-full flex flex-col overflow-hidden">
+        <Table.ScrollContainer className="w-full flex-1 overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable] pr-1.5">
+          <Table.Content aria-label="15 Standard Depths Thermal Sounding Matrix" className="w-full min-w-full text-left text-sm border-collapse">
             <Table.Header className="sticky top-0 bg-[#f8fafc] border-b border-[#e2e8f0] z-10">
-              <Table.Column isRowHeader className="py-2.5 px-4 font-sans text-sm text-[#64748d] text-left font-medium">
+              <Table.Column isRowHeader className="py-2.5 px-3 sm:px-4 font-sans text-xs sm:text-sm text-[#64748d] text-left font-medium whitespace-nowrap">
                 Depth
               </Table.Column>
-              <Table.Column className="py-2.5 px-4 font-sans text-sm text-[#64748d] text-right font-medium">
+              <Table.Column className={`py-2.5 pl-3 sm:pl-4 ${argo ? 'pr-3 sm:pr-4' : 'pr-6 sm:pr-8'} font-sans text-xs sm:text-sm text-[#64748d] text-right font-medium whitespace-nowrap`}>
                 Recon (°C)
               </Table.Column>
               {argo && (
-                <Table.Column className="py-2.5 px-4 font-sans text-sm text-[#64748d] text-right font-medium">
+                <Table.Column className="py-2.5 px-3 sm:px-4 font-sans text-xs sm:text-sm text-[#64748d] text-right font-medium whitespace-nowrap">
                   Argo (°C)
                 </Table.Column>
               )}
               {argo && (
-                <Table.Column className="py-2.5 px-4 font-sans text-sm text-[#64748d] text-right font-medium">
+                <Table.Column className="py-2.5 pl-3 sm:pl-4 pr-6 sm:pr-8 font-sans text-xs sm:text-sm text-[#64748d] text-right font-medium whitespace-nowrap">
                   ΔT (°C)
                 </Table.Column>
               )}
             </Table.Header>
-            <Table.Body className="font-mono text-sm divide-y divide-[#f1f5f9]">
+            <Table.Body className="font-mono text-xs sm:text-sm divide-y divide-[#f1f5f9]">
               {reconstruction.depths_m.map((depth, idx) => {
                 const recT = reconstruction.temperature_c[idx];
                 const argoT = argo ? argo.temperature_c[idx] : null;
@@ -55,19 +55,19 @@ export const ThermalMetricsMatrix: React.FC<ThermalMetricsMatrixProps> = ({
 
                 return (
                   <Table.Row key={depth} id={String(depth)} className="hover:bg-[#f8fafc] border-b border-[#f1f5f9] transition-colors">
-                    <Table.Cell className="py-2.5 px-4 font-sans font-medium text-[#0d253d]">
+                    <Table.Cell className="py-2 px-3 sm:px-4 font-sans font-medium text-[#0d253d] whitespace-nowrap">
                       {depth} m
                     </Table.Cell>
-                    <Table.Cell className="py-2.5 px-4 text-right text-[#3b49df] font-semibold tabular-nums">
+                    <Table.Cell className={`py-2 pl-3 sm:pl-4 ${argo ? 'pr-3 sm:pr-4' : 'pr-6 sm:pr-8'} text-right text-[#3b49df] font-semibold tabular-nums whitespace-nowrap`}>
                       {recT.toFixed(2)}
                     </Table.Cell>
                     {argo && (
-                      <Table.Cell className="py-2.5 px-4 text-right text-[#e11d48] font-medium tabular-nums">
+                      <Table.Cell className="py-2 px-3 sm:px-4 text-right text-[#e11d48] font-medium tabular-nums whitespace-nowrap">
                         {argoT !== null ? argoT.toFixed(2) : '—'}
                       </Table.Cell>
                     )}
                     {argo && (
-                      <Table.Cell className="py-2.5 px-4 text-right font-mono tabular-nums text-sm">
+                      <Table.Cell className="py-2 pl-3 sm:pl-4 pr-6 sm:pr-8 text-right font-mono tabular-nums text-xs sm:text-sm whitespace-nowrap">
                         {delta !== null ? (
                           <span
                             className={`font-medium ${

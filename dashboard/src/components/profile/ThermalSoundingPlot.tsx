@@ -164,6 +164,17 @@ export const ThermalSoundingPlot: React.FC<ThermalSoundingPlotProps> = ({
     });
   }, [reconstruction]);
 
+  useEffect(() => {
+    if (!chartRef.current) return;
+    const observer = new ResizeObserver(() => {
+      if (chartRef.current) {
+        Plotly.Plots.resize(chartRef.current);
+      }
+    });
+    observer.observe(chartRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="relative w-full h-full rounded-xl overflow-hidden bg-white">
       <div ref={chartRef} style={{ width: '100%', height: height !== undefined ? `${height}px` : '100%' }} />
