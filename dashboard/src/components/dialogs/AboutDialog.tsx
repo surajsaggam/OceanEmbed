@@ -48,7 +48,7 @@ export const AboutDialog: React.FC<AboutDialogProps> = ({
 
         <div className="space-y-4 text-sm leading-relaxed text-[#273951]">
           {/* Mission & Purpose */}
-          <div className="border border-[#e3e8ee] rounded-lg p-4 space-y-2 bg-white">
+          <div className="border border-[#e3e8ee] rounded-xl p-4 space-y-2 bg-white">
             <div className="font-semibold text-xs text-[#0d253d] uppercase tracking-wider">
               What OceanIQ Does
             </div>
@@ -58,7 +58,7 @@ export const AboutDialog: React.FC<AboutDialogProps> = ({
           </div>
 
           {/* The Scientific Problem */}
-          <div className="border border-[#e3e8ee] rounded-lg p-4 space-y-2 bg-white">
+          <div className="border border-[#e3e8ee] rounded-xl p-4 space-y-2 bg-white">
             <div className="font-semibold text-xs text-[#0d253d] uppercase tracking-wider">
               The Physical Challenge
             </div>
@@ -71,7 +71,7 @@ export const AboutDialog: React.FC<AboutDialogProps> = ({
           </div>
 
           {/* Key Capabilities */}
-          <div className="border border-[#e3e8ee] rounded-lg p-4 space-y-2 bg-white">
+          <div className="border border-[#e3e8ee] rounded-xl p-4 space-y-2 bg-white">
             <div className="font-semibold text-xs text-[#0d253d] uppercase tracking-wider">
               Key Capabilities & Output
             </div>
@@ -92,7 +92,7 @@ export const AboutDialog: React.FC<AboutDialogProps> = ({
           </div>
 
           {/* Scientific Guardrail */}
-          <div className="p-3.5 rounded-lg bg-[#f8fafc] border border-[#e2e8f0] text-xs text-[#64748d]">
+          <div className="p-3.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-xs text-[#64748d]">
             <b className="text-[#0d253d]">Scientific Integrity Notice:</b> OceanIQ is an estimation framework designed to complement physical oceanographic observation systems. It does not replace direct in-situ Argo profiling floats, moored buoys, or CTD research voyages.
           </div>
         </div>

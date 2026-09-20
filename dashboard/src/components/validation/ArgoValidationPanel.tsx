@@ -8,7 +8,7 @@ interface ArgoValidationPanelProps {
 export const ArgoValidationPanel: React.FC<ArgoValidationPanelProps> = ({ argo }) => {
   if (!argo) {
     return (
-      <div className="p-8 text-center text-[#64748d] text-sm border border-[#e3e8ee] rounded-lg bg-white space-y-2">
+      <div className="p-8 text-center text-[#64748d] text-sm border border-[#e3e8ee] rounded-xl bg-white space-y-2 shadow-xs">
         <div className="font-semibold text-base text-[#0d253d]">
           No Collocated In-Situ Argo Float in Validation Window
         </div>
@@ -33,7 +33,7 @@ export const ArgoValidationPanel: React.FC<ArgoValidationPanelProps> = ({ argo }
       {/* Two-Column Scientific Summary Sheet */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Float Metadata Table */}
-        <div className="rounded-lg border border-[#e3e8ee] bg-white overflow-hidden">
+        <div className="rounded-xl border border-[#e3e8ee] bg-white overflow-hidden shadow-xs">
           <div className="px-4 py-2.5 bg-[#f8fafc] border-b border-[#e2e8f0] text-sm font-medium text-[#64748d]">
             In-Situ Float Cycle Metadata
           </div>
@@ -60,7 +60,7 @@ export const ArgoValidationPanel: React.FC<ArgoValidationPanelProps> = ({ argo }
         </div>
 
         {/* Quantitative Residual Metrics Table */}
-        <div className="rounded-lg border border-[#e3e8ee] bg-white overflow-hidden">
+        <div className="rounded-xl border border-[#e3e8ee] bg-white overflow-hidden shadow-xs">
           <div className="px-4 py-2.5 bg-[#f8fafc] border-b border-[#e2e8f0] text-sm font-medium text-[#64748d]">
             Vertical Reconstruction Error Metrics (0–1000m)
           </div>
@@ -94,7 +94,7 @@ export const ArgoValidationPanel: React.FC<ArgoValidationPanelProps> = ({ argo }
       </div>
 
       {/* Benchmark Guardrail Note */}
-      <div className="px-4 py-3 rounded-lg bg-[#f8fafc] border border-[#e2e8f0] text-sm text-[#64748d] leading-relaxed">
+      <div className="px-4 py-3 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-sm text-[#64748d] leading-relaxed">
         <span className="font-semibold text-[#0d253d] block mb-0.5">Independent Validation Protocol</span>
         Quality-controlled Argo CTD observations from the Indian National Centre for Ocean Information Services (INCOIS) Live Access Server are kept strictly independent from training datasets and evaluated as blind reference profiles.
       </div>

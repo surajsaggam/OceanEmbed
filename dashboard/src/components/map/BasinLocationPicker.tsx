@@ -156,13 +156,13 @@ export const BasinLocationPicker: React.FC<BasinLocationPickerProps> = ({
 
   return (
     <div
-      className="relative isolate w-full rounded-xl overflow-hidden border border-[#e3e8ee] bg-white shadow-xs"
+      className="relative isolate w-full h-full overflow-hidden bg-white"
       style={{ height }}
       role="region"
       aria-label="North Indian Ocean Basin Geographic Selector"
     >
       {/* Selected Coordinates Overlay */}
-      <div className="absolute top-3 left-3 z-20 flex items-center gap-2 px-2.5 py-1 rounded-md bg-white/95 backdrop-blur-md border border-[#e3e8ee] text-sm font-mono text-[#0d253d] pointer-events-none shadow-xs">
+      <div className="absolute top-3 left-3 z-20 flex items-center gap-2 px-2.5 py-1 rounded-lg bg-white/95 backdrop-blur-md border border-[#e3e8ee] text-xs font-mono text-[#0d253d] pointer-events-none shadow-xs">
         <Crosshair className="size-3 text-[#533afd]" />
         <span className="tabular-nums font-medium">
           {latitude.toFixed(2)}°N, {longitude.toFixed(2)}°E
@@ -174,7 +174,7 @@ export const BasinLocationPicker: React.FC<BasinLocationPickerProps> = ({
         type="button"
         onClick={handleResetView}
         title="Reset map view to North Indian Ocean domain"
-        className="absolute top-3 right-12 z-20 p-1.5 rounded-md bg-white/95 hover:bg-[#f6f9fc] border border-[#e3e8ee] text-[#64748d] hover:text-[#0d253d] transition-colors cursor-pointer shadow-xs"
+        className="absolute top-3 right-12 z-20 p-1.5 rounded-lg bg-white/95 hover:bg-[#f8fafc] border border-[#e3e8ee] text-[#64748d] hover:text-[#0d253d] transition-all cursor-pointer shadow-xs active:scale-95"
         aria-label="Reset basin view"
       >
         <RotateCcw className="size-3.5" />
@@ -184,7 +184,7 @@ export const BasinLocationPicker: React.FC<BasinLocationPickerProps> = ({
       <div className="w-full h-full" ref={mapContainerRef} />
 
       {/* Domain Footnote */}
-      <div className="absolute bottom-3 left-3 z-20 text-[11px] font-mono text-[#64748d] bg-white/95 backdrop-blur-md px-2.5 py-0.5 rounded-md border border-[#e3e8ee] pointer-events-none shadow-xs">
+      <div className="absolute bottom-3 left-3 z-20 text-[11px] font-mono text-[#64748d] bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-lg border border-[#e3e8ee] pointer-events-none shadow-xs">
         0.25° grid · 5°–30°N, 45°–105°E
       </div>
     </div>

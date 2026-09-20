@@ -10,7 +10,7 @@ export const ScientificProvenanceCard: React.FC<ScientificProvenanceCardProps> =
 }) => {
   if (!reconstruction) {
     return (
-      <div className="p-8 text-center text-[#64748d] text-sm border border-[#e3e8ee] rounded-lg bg-white">
+      <div className="p-8 text-center text-[#64748d] text-sm border border-[#e3e8ee] rounded-xl bg-white shadow-xs">
         No active reconstruction. Execute reconstruction to inspect scientific data lineage.
       </div>
     );
@@ -46,7 +46,7 @@ export const ScientificProvenanceCard: React.FC<ScientificProvenanceCardProps> =
       </div>
 
       {/* Structured Specification Table */}
-      <div className="rounded-lg border border-[#e3e8ee] bg-white overflow-hidden">
+      <div className="rounded-xl border border-[#e3e8ee] bg-white overflow-hidden shadow-xs">
         <div className="divide-y divide-[#f1f5f9] text-sm font-mono">
           {provenanceItems.map((item) => (
             <div key={item.label} className="grid grid-cols-1 sm:grid-cols-12 px-4 py-2.5 hover:bg-[#f8fafc] transition-colors">
@@ -62,7 +62,7 @@ export const ScientificProvenanceCard: React.FC<ScientificProvenanceCardProps> =
       </div>
 
       {/* Operational Guardrail Note */}
-      <div className="px-4 py-3 rounded-lg bg-[#f8fafc] border border-[#e2e8f0] text-sm text-[#64748d] leading-relaxed">
+      <div className="px-4 py-3 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-sm text-[#64748d] leading-relaxed">
         <span className="font-semibold text-[#0d253d] block mb-0.5">Scientific Limitation & Mandate</span>
         OceanEmbed reconstructs subsurface ocean temperature over the North Indian Ocean from daily multi-source satellite surface observations. It complements sparse observing arrays but does not replace moorings, research vessels, or in-situ Argo profiling floats.
       </div>

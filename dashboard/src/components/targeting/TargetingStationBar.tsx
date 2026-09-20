@@ -84,7 +84,7 @@ export const TargetingStationBar: React.FC<TargetingStationBarProps> = ({
         <div>
           <label
             htmlFor="target-date-trigger"
-            className="block text-[13px] font-medium text-[#64748d] mb-1 uppercase tracking-wider"
+            className="block text-[11px] font-semibold text-[#64748d] mb-1.5 uppercase tracking-wider"
           >
             Observation Date
           </label>
@@ -94,7 +94,7 @@ export const TargetingStationBar: React.FC<TargetingStationBarProps> = ({
                 id="target-date-trigger"
                 type="button"
                 disabled={loading}
-                className="h-9 px-3 rounded-md border border-[#cbd5e1] bg-white text-[#0d253d] font-mono text-sm tabular-nums flex items-center justify-between gap-2.5 hover:border-[#94a3b8] focus:outline-none focus:border-[#533afd] focus:ring-1 focus:ring-[#533afd] transition-all disabled:opacity-50 cursor-pointer select-none"
+                className="h-9 px-3 rounded-lg border border-[#cbd5e1] bg-white text-[#0d253d] font-mono text-sm tabular-nums flex items-center justify-between gap-2.5 hover:border-[#94a3b8] focus:outline-none focus:border-[#533afd] focus:ring-1 focus:ring-[#533afd] transition-all disabled:opacity-50 cursor-pointer select-none"
                 aria-label="Observation Date"
               >
                 <span>{date}</span>
@@ -123,7 +123,7 @@ export const TargetingStationBar: React.FC<TargetingStationBarProps> = ({
         <div>
           <label
             htmlFor="target-lat-input"
-            className="block text-[13px] font-medium text-[#64748d] mb-1 uppercase tracking-wider"
+            className="block text-[11px] font-semibold text-[#64748d] mb-1.5 uppercase tracking-wider"
           >
             Latitude
           </label>
@@ -138,7 +138,7 @@ export const TargetingStationBar: React.FC<TargetingStationBarProps> = ({
               onChange={(e) => onLatitudeChange(parseFloat(e.target.value) || 0)}
               onKeyDown={handleKeyDown}
               disabled={loading}
-              className="h-9 w-24 pl-3 pr-8 rounded-md border border-[#cbd5e1] bg-white text-[#0d253d] font-mono text-sm tabular-nums focus:outline-none focus:border-[#533afd] focus:ring-1 focus:ring-[#533afd] transition-all disabled:opacity-50"
+              className="h-9 w-24 pl-3 pr-8 rounded-lg border border-[#cbd5e1] bg-white text-[#0d253d] font-mono text-sm tabular-nums focus:outline-none focus:border-[#533afd] focus:ring-1 focus:ring-[#533afd] transition-all disabled:opacity-50"
               aria-label="Target Latitude (5°–30°N)"
             />
             <span className="absolute right-2.5 text-[13px] font-mono text-[#64748d] pointer-events-none">
@@ -151,7 +151,7 @@ export const TargetingStationBar: React.FC<TargetingStationBarProps> = ({
         <div>
           <label
             htmlFor="target-lon-input"
-            className="block text-[13px] font-medium text-[#64748d] mb-1 uppercase tracking-wider"
+            className="block text-[11px] font-semibold text-[#64748d] mb-1.5 uppercase tracking-wider"
           >
             Longitude
           </label>
@@ -166,7 +166,7 @@ export const TargetingStationBar: React.FC<TargetingStationBarProps> = ({
               onChange={(e) => onLongitudeChange(parseFloat(e.target.value) || 0)}
               onKeyDown={handleKeyDown}
               disabled={loading}
-              className="h-9 w-24 pl-3 pr-8 rounded-md border border-[#cbd5e1] bg-white text-[#0d253d] font-mono text-sm tabular-nums focus:outline-none focus:border-[#533afd] focus:ring-1 focus:ring-[#533afd] transition-all disabled:opacity-50"
+              className="h-9 w-24 pl-3 pr-8 rounded-lg border border-[#cbd5e1] bg-white text-[#0d253d] font-mono text-sm tabular-nums focus:outline-none focus:border-[#533afd] focus:ring-1 focus:ring-[#533afd] transition-all disabled:opacity-50"
               aria-label="Target Longitude (45°–105°E)"
             />
             <span className="absolute right-2.5 text-[13px] font-mono text-[#64748d] pointer-events-none">
@@ -182,10 +182,10 @@ export const TargetingStationBar: React.FC<TargetingStationBarProps> = ({
             onSelectionChange={handleRegimeChange}
             className="w-56 sm:w-64"
           >
-            <Label className="block text-[13px] font-medium text-[#64748d] mb-1 uppercase tracking-wider">
+            <Label className="block text-[11px] font-semibold text-[#64748d] mb-1.5 uppercase tracking-wider">
               Oceanographic Regime
             </Label>
-            <ComboBox.InputGroup className="h-9 px-3 rounded-md border border-[#cbd5e1] bg-white flex items-center justify-between gap-2 text-sm text-[#273951] hover:border-[#94a3b8] focus-within:border-[#533afd] focus-within:ring-1 focus-within:ring-[#533afd] transition-all">
+            <ComboBox.InputGroup className="h-9 px-3 rounded-lg border border-[#cbd5e1] bg-white flex items-center justify-between gap-2 text-sm text-[#273951] hover:border-[#94a3b8] focus-within:border-[#533afd] focus-within:ring-1 focus-within:ring-[#533afd] transition-all">
               <Input
                 placeholder="Select Station Preset..."
                 className="w-full bg-transparent text-sm text-[#0d253d] font-normal outline-none placeholder:text-[#94a3b8]"
@@ -222,7 +222,7 @@ export const TargetingStationBar: React.FC<TargetingStationBarProps> = ({
           <Button
             onClick={onReconstruct}
             disabled={loading || !isValid}
-            className="h-9 px-5 text-sm rounded-full font-medium"
+            className="h-9 px-5 text-sm rounded-full font-medium active:scale-[0.985] transition-all cursor-pointer"
             aria-label="Reconstruct Subsurface Profile"
           >
             {loading ? (

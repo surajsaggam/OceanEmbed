@@ -54,8 +54,11 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
         aria-label="Primary Analytical Horizon"
       >
         {/* Interactive NIO Geospatial Reference Stage */}
-        <div className="lg:col-span-5 flex flex-col rounded-xl border border-[#e3e8ee] bg-white overflow-hidden shadow-xs">
-          <div className="px-5 py-3 bg-white border-b border-[#e2e8f0] flex items-center justify-between">
+        <div
+          className="lg:col-span-5 flex flex-col rounded-xl border border-[#e3e8ee] bg-white overflow-hidden shadow-xs"
+          style={{ height: 'calc(100vh - 235px)', minHeight: '410px', maxHeight: '490px' }}
+        >
+          <div className="px-5 py-3 bg-white border-b border-[#e2e8f0] flex items-center justify-between shrink-0">
             <span className="text-[13px] font-semibold text-[#0d253d] uppercase tracking-wider">
               North Indian Ocean Basin
             </span>
@@ -64,18 +67,23 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
             </span>
           </div>
 
-          <BasinLocationPicker
-            latitude={latitude}
-            longitude={longitude}
-            onSelectCoordinates={onSelectCoordinates}
-            height="calc(100vh - 220px)"
-          />
+          <div className="flex-1 min-h-0 w-full relative">
+            <BasinLocationPicker
+              latitude={latitude}
+              longitude={longitude}
+              onSelectCoordinates={onSelectCoordinates}
+              height="100%"
+            />
+          </div>
         </div>
 
-        {/* Centerpiece Analytical Stage (Plotly 15-Depth Thermal Sounding) */}
-        <div className="lg:col-span-7 flex flex-col rounded-xl border border-[#e3e8ee] bg-white overflow-hidden shadow-xs">
+        {/* Centerpiece Analytical Stage (Subsurface Temperature Profile) */}
+        <div
+          className="lg:col-span-7 flex flex-col rounded-xl border border-[#e3e8ee] bg-white overflow-hidden shadow-xs"
+          style={{ height: 'calc(100vh - 235px)', minHeight: '410px', maxHeight: '490px' }}
+        >
           {/* Sounding Stage Header */}
-          <div className="px-5 py-3 bg-white border-b border-[#e2e8f0] flex flex-wrap items-center justify-between gap-3">
+          <div className="px-5 py-3 bg-white border-b border-[#e2e8f0] flex flex-wrap items-center justify-between gap-3 shrink-0">
             <div>
               <span className="text-[13px] font-semibold text-[#0d253d] uppercase tracking-wider block">
                 Subsurface Temperature Profile
@@ -85,7 +93,7 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
               </span>
             </div>
 
-            {/* Diagnostic Metrics Readout (Quiet scientific text, NO badge pills) */}
+            {/* Diagnostic Metrics Readout */}
             {reconstruction && (
               <div className="flex items-center gap-3 font-mono text-sm text-[#64748d]">
                 {reconstruction.d26_depth_m !== null && reconstruction.d26_depth_m !== undefined && (
@@ -158,7 +166,7 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
               <button
                 type="button"
                 onClick={() => setIsProfileExpanded(true)}
-                className="p-1.5 rounded-md border border-[#e2e8f0] bg-white hover:bg-[#f8fafc] text-[#64748d] hover:text-[#0d253d] transition-colors cursor-pointer"
+                className="p-1.5 rounded-md border border-[#e2e8f0] bg-white hover:bg-[#f8fafc] text-[#64748d] hover:text-[#0d253d] transition-colors cursor-pointer flex items-center justify-center shadow-xs"
                 title="Expand Subsurface Temperature Profile"
                 aria-label="Expand Subsurface Temperature Profile"
               >
@@ -167,10 +175,10 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
             </div>
           </div>
 
-          {/* Sounding Content Area — viewport-relative height, stays within one screen */}
-          <div className="p-3 bg-white" style={{ height: 'calc(100vh - 220px - 66px)' }}>
+          {/* Sounding Content Area */}
+          <div className="flex-1 min-h-0 w-full p-3 bg-white overflow-hidden">
             {viewMode === 'chart' && (
-              <div className="w-full h-full">
+              <div className="w-full h-full min-h-0">
                 <ThermalSoundingPlot
                   reconstruction={reconstruction}
                   loading={loading}
@@ -180,7 +188,7 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
             )}
 
             {viewMode === 'split' && (
-              <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 h-full">
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 h-full min-h-0">
                 <div className="xl:col-span-7 h-full min-w-0 min-h-0">
                   <ThermalSoundingPlot
                     reconstruction={reconstruction}
@@ -198,7 +206,7 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
             )}
 
             {viewMode === 'table' && (
-              <div className="w-full h-full overflow-hidden flex flex-col">
+              <div className="w-full h-full min-h-0 overflow-hidden flex flex-col">
                 <ThermalMetricsMatrix
                   reconstruction={reconstruction}
                   maxHeight="100%"
@@ -337,7 +345,7 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
               variant="outline"
               size="sm"
               onClick={() => setIsProfileExpanded(false)}
-              className="h-8 px-4 text-xs font-medium cursor-pointer"
+              className="h-8 px-4 text-xs font-medium rounded-lg active:scale-95 transition-all cursor-pointer"
             >
               Close
             </Button>
@@ -356,25 +364,25 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
               <span className="text-[13px] font-semibold text-[#0d253d] uppercase tracking-wider block">
                 Diagnostic Analysis & Scientific Lineage
               </span>
-              <span className="text-[13px] text-[#64748d] font-mono">
+              <span className="text-[13px] text-[#64748d] font-mono mt-0.5 block">
                 Multimodal observation inversion, latent representation, and independent ground truth
               </span>
             </div>
 
-            <TabsList className="h-8">
-              <TabsTrigger value="drivers" className="text-sm px-3">
+            <TabsList className="h-8.5 p-0.5 rounded-lg bg-[#f1f5f9] border border-[#e2e8f0]">
+              <TabsTrigger value="drivers" className="text-xs px-3 rounded-md data-[state=active]:bg-white data-[state=active]:text-[#0d253d] data-[state=active]:shadow-xs">
                 Surface Observations (7)
               </TabsTrigger>
 
-              <TabsTrigger value="manifold" className="text-sm px-3">
+              <TabsTrigger value="manifold" className="text-xs px-3 rounded-md data-[state=active]:bg-white data-[state=active]:text-[#0d253d] data-[state=active]:shadow-xs">
                 128-D Latent Manifold
               </TabsTrigger>
 
-              <TabsTrigger value="validation" className="text-sm px-3">
+              <TabsTrigger value="validation" className="text-xs px-3 rounded-md data-[state=active]:bg-white data-[state=active]:text-[#0d253d] data-[state=active]:shadow-xs">
                 In-Situ Argo Validation
               </TabsTrigger>
 
-              <TabsTrigger value="provenance" className="text-sm px-3">
+              <TabsTrigger value="provenance" className="text-xs px-3 rounded-md data-[state=active]:bg-white data-[state=active]:text-[#0d253d] data-[state=active]:shadow-xs">
                 Model Lineage & Audit
               </TabsTrigger>
             </TabsList>

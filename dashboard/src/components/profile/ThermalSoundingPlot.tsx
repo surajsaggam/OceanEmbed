@@ -1,5 +1,14 @@
-import React, { useEffect, useRef } from 'react';
-import Plotly from 'plotly.js-dist-min';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  createOptionsChart,
+  AreaSeries,
+  LineSeries,
+  ColorType,
+  LineStyle,
+  CrosshairMode,
+  type IChartApiBase,
+  type ISeriesApi,
+} from 'lightweight-charts';
 import { Loader2 } from 'lucide-react';
 import type { ReconstructionResponse } from '@/types/api';
 
@@ -9,183 +18,267 @@ interface ThermalSoundingPlotProps {
   height?: number;
 }
 
+interface HoveredPoint {
+  depth: number;
+  reconTemp: number | null;
+  argoTemp: number | null;
+}
+
 export const ThermalSoundingPlot: React.FC<ThermalSoundingPlotProps> = ({
   reconstruction,
   loading,
-  height = 480,
+  height,
 }) => {
-  const chartRef = useRef<HTMLDivElement>(null);
+  const [hoveredPoint, setHoveredPoint] = useState<HoveredPoint | null>(null);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartInstanceRef = useRef<IChartApiBase<number> | null>(null);
 
   useEffect(() => {
-    if (!chartRef.current) return;
+    if (!containerRef.current) return;
+
+    // Clean previous chart instance if existing
+    if (chartInstanceRef.current) {
+      chartInstanceRef.current.remove();
+      chartInstanceRef.current = null;
+    }
+
+    const chart = createOptionsChart(containerRef.current, {
+      autoSize: true,
+      layout: {
+        attributionLogo: false,
+        background: { type: ColorType.Solid, color: '#ffffff' },
+        textColor: '#64748d',
+        fontFamily: 'var(--font-sans, system-ui)',
+        fontSize: 11,
+      },
+      grid: {
+        vertLines: { color: '#f8fafc', style: LineStyle.Solid },
+        horzLines: { color: '#f1f5f9', style: LineStyle.Solid },
+      },
+      crosshair: {
+        mode: CrosshairMode.Normal,
+        vertLine: {
+          color: '#94a3b8',
+          width: 1,
+          style: LineStyle.Dashed,
+          labelBackgroundColor: '#0d253d',
+        },
+        horzLine: {
+          color: '#94a3b8',
+          width: 1,
+          style: LineStyle.Dashed,
+          labelBackgroundColor: '#0d253d',
+        },
+      },
+      rightPriceScale: {
+        borderColor: '#e2e8f0',
+        scaleMargins: {
+          top: 0.1,
+          bottom: 0.1,
+        },
+      },
+      timeScale: {
+        borderColor: '#e2e8f0',
+        fixLeftEdge: true,
+        fixRightEdge: true,
+      },
+      handleScroll: false,
+      handleScale: {
+        axisPressedMouseMove: false,
+        mouseWheel: false,
+        pinch: false,
+      },
+      localization: {
+        precision: 2,
+        priceFormatter: (price: number) => `${price.toFixed(2)} °C`,
+        timeFormatter: (depth: number) => `${depth}m`,
+      },
+    });
+
+    chartInstanceRef.current = chart;
 
     if (!reconstruction) {
-      // Clean empty state plot
-      Plotly.newPlot(
-        chartRef.current,
-        [],
-        {
-          title: {
-            text: 'Select coordinates and click "Reconstruct Profile"',
-            font: { color: '#64748d', size: 12, family: 'var(--font-sans, system-ui)' },
-          },
-          paper_bgcolor: '#ffffff',
-          plot_bgcolor: '#ffffff',
-          xaxis: {
-            title: { text: 'Temperature (°C)', font: { color: '#64748d', size: 11 } },
-            color: '#64748d',
-            range: [0, 35],
-            gridcolor: '#f1f5f9',
-            linecolor: '#e2e8f0',
-          },
-          yaxis: {
-            title: { text: 'Depth (m)', font: { color: '#64748d', size: 11 } },
-            autorange: 'reversed',
-            color: '#64748d',
-            range: [1000, 0],
-            gridcolor: '#f1f5f9',
-            linecolor: '#e2e8f0',
-          },
-          margin: { l: 54, r: 24, t: 36, b: 40 },
-        },
-        { responsive: true, displayModeBar: false }
-      );
       return;
     }
 
-    const traces: Plotly.Data[] = [
-      {
-        x: reconstruction.temperature_c,
-        y: reconstruction.depths_m,
-        type: 'scatter',
-        mode: 'lines+markers',
-        name: 'OceanEmbed Reconstruction',
-        line: { color: '#3b49df', width: 2.2, shape: 'spline', smoothing: 0.8 },
-        marker: {
-          color: '#3b49df',
-          size: 6,
-          symbol: 'circle',
-          line: { color: '#ffffff', width: 1.5 },
-        },
-        hovertemplate:
-          '<b>Depth:</b> %{y} m<br><b>Reconstructed T:</b> %{x:.2f} °C<extra></extra>',
+    // Add OceanEmbed Reconstruction Area Series
+    const areaSeries = chart.addSeries(AreaSeries, {
+      lineColor: '#3b49df',
+      topColor: 'rgba(59, 73, 223, 0.20)',
+      bottomColor: 'rgba(59, 73, 223, 0.02)',
+      lineWidth: 2,
+      priceLineVisible: false,
+      lastValueVisible: false,
+      priceFormat: {
+        type: 'custom',
+        formatter: (price: number) => `${price.toFixed(2)} °C`,
       },
-    ];
+    });
 
-    // Collocated in-situ Argo float overlay when available
-    if (reconstruction.argo_comparison) {
-      const argo = reconstruction.argo_comparison;
-      traces.push({
-        x: argo.temperature_c,
-        y: argo.depths_m,
-        type: 'scatter',
-        mode: 'lines+markers',
-        name: `In-Situ Argo (${argo.float_id})`,
-        line: { color: '#e11d48', width: 1.8, dash: 'dash', shape: 'spline', smoothing: 0.8 },
-        marker: {
-          color: '#e11d48',
-          size: 6.5,
-          symbol: 'diamond',
-          line: { color: '#ffffff', width: 1.5 },
-        },
-        hovertemplate:
-          '<b>Depth:</b> %{y} m<br><b>Argo Float T:</b> %{x:.2f} °C<extra></extra>',
-      });
-    }
+    const reconData = reconstruction.depths_m.map((depth, idx) => ({
+      time: depth,
+      value: reconstruction.temperature_c[idx],
+    }));
+    areaSeries.setData(reconData);
 
-    // D26 isotherm horizontal line
-    const shapes: Partial<Plotly.Shape>[] = [];
-    const annotations: Partial<Plotly.Annotation>[] = [];
-
+    // D26 isotherm horizontal reference line
     if (
       reconstruction.d26_depth_m !== null &&
       reconstruction.d26_depth_m !== undefined
     ) {
-      shapes.push({
-        type: 'line',
-        x0: 2,
-        x1: 34,
-        y0: reconstruction.d26_depth_m,
-        y1: reconstruction.d26_depth_m,
-        line: { color: '#d97706', width: 1.2, dash: 'dot' },
-      });
-      annotations.push({
-        x: 32,
-        y: reconstruction.d26_depth_m,
-        text: `D26: ${reconstruction.d26_depth_m}m`,
-        showarrow: false,
-        font: { color: '#92400e', size: 10, family: 'var(--font-mono, monospace)' },
-        bgcolor: '#ffffff',
-        bordercolor: '#e3e8ee',
-        borderwidth: 1,
-        borderpad: 3,
+      areaSeries.createPriceLine({
+        price: 26.0,
+        color: '#d97706',
+        lineWidth: 1,
+        lineStyle: LineStyle.Dashed,
+        axisLabelVisible: true,
+        title: `D26 (${reconstruction.d26_depth_m}m)`,
       });
     }
 
-    const layout: Partial<Plotly.Layout> = {
-      paper_bgcolor: '#ffffff',
-      plot_bgcolor: '#ffffff',
-      font: { color: '#0d253d', family: 'var(--font-sans, system-ui)', size: 11 },
-      xaxis: {
-        title: { text: 'Temperature (°C)', font: { size: 11, color: '#475569' } },
-        range: [2, 34],
-        gridcolor: '#f1f5f9',
-        zerolinecolor: '#e2e8f0',
-        linecolor: '#e2e8f0',
-        tickfont: { size: 10, family: 'var(--font-mono, monospace)', color: '#64748d' },
-      },
-      yaxis: {
-        title: { text: 'Depth (meters)', font: { size: 11, color: '#475569' } },
-        autorange: 'reversed',
-        gridcolor: '#f1f5f9',
-        zerolinecolor: '#e2e8f0',
-        linecolor: '#e2e8f0',
-        tickvals: [0, 100, 200, 300, 500, 700, 1000],
-        ticktext: ['0m', '100m', '200m', '300m', '500m', '700m', '1000m'],
-        tickfont: { size: 10, family: 'var(--font-mono, monospace)', color: '#64748d' },
-      },
-      legend: {
-        x: 0.35,
-        y: 0.06,
-        bgcolor: 'rgba(255, 255, 255, 0.95)',
-        bordercolor: '#e3e8ee',
-        borderwidth: 1,
-        font: { size: 11, color: '#0d253d' },
-      },
-      shapes,
-      annotations,
-      margin: { l: 56, r: 24, t: 20, b: 44 },
-      hovermode: 'closest',
-    };
+    // Collocated in-situ Argo float overlay series
+    let argoSeries: ISeriesApi<'Line', number> | null = null;
+    if (reconstruction.argo_comparison) {
+      const argo = reconstruction.argo_comparison;
+      argoSeries = chart.addSeries(LineSeries, {
+        color: '#e11d48',
+        lineWidth: 2,
+        lineStyle: LineStyle.Dashed,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        priceFormat: {
+          type: 'custom',
+          formatter: (price: number) => `${price.toFixed(2)} °C`,
+        },
+      });
 
-    Plotly.react(chartRef.current, traces, layout, {
-      responsive: true,
-      displayModeBar: false,
+      const argoData = argo.depths_m.map((depth, idx) => ({
+        time: depth,
+        value: argo.temperature_c[idx],
+      }));
+      argoSeries.setData(argoData);
+    }
+
+    chart.timeScale().fitContent();
+
+    // Crosshair hover synchronization with HUD
+    chart.subscribeCrosshairMove((param) => {
+      if (!param.time || param.point === undefined) {
+        setHoveredPoint(null);
+        return;
+      }
+      const depth = param.time as number;
+      const recIndex = reconstruction.depths_m.indexOf(depth);
+      const recVal = recIndex >= 0 ? reconstruction.temperature_c[recIndex] : null;
+
+      let argoVal: number | null = null;
+      if (reconstruction.argo_comparison) {
+        const argoIndex = reconstruction.argo_comparison.depths_m.indexOf(depth);
+        if (argoIndex >= 0) {
+          argoVal = reconstruction.argo_comparison.temperature_c[argoIndex];
+        }
+      }
+
+      setHoveredPoint({
+        depth,
+        reconTemp: recVal,
+        argoTemp: argoVal,
+      });
     });
+
+    return () => {
+      chart.remove();
+      chartInstanceRef.current = null;
+    };
   }, [reconstruction]);
 
+  // Ensure chart fits content on size updates
   useEffect(() => {
-    if (!chartRef.current) return;
-    const observer = new ResizeObserver(() => {
-      if (chartRef.current) {
-        Plotly.Plots.resize(chartRef.current);
-      }
-    });
-    observer.observe(chartRef.current);
-    return () => observer.disconnect();
-  }, []);
+    if (chartInstanceRef.current) {
+      chartInstanceRef.current.timeScale().fitContent();
+    }
+  }, [height]);
+
+  const containerStyle = height !== undefined ? { height: `${height}px` } : { height: '100%' };
 
   return (
-    <div className="relative w-full h-full rounded-xl overflow-hidden bg-white">
-      <div ref={chartRef} style={{ width: '100%', height: height !== undefined ? `${height}px` : '100%' }} />
-
-      {loading && (
-        <div className="absolute inset-0 bg-white/90 backdrop-blur-xs flex items-center justify-center text-[#533afd] font-mono text-sm gap-2 z-20">
-          <Loader2 className="size-4 animate-spin" />
-          <span className="font-medium text-[#0d253d]">Synthesizing 15-Depth Thermal Profile...</span>
+    <div className="relative w-full h-full rounded-xl overflow-hidden bg-white flex flex-col" style={containerStyle}>
+      {/* Top Header Bar: Live HUD & Essential Legend */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b border-[#f1f5f9] bg-white z-10 flex-shrink-0">
+        <div className="flex flex-wrap items-center gap-3 text-xs">
+          {hoveredPoint ? (
+            <div className="flex items-center gap-3 font-mono">
+              <span className="text-[#64748d]">
+                Depth: <strong className="text-[#0d253d] font-semibold">{hoveredPoint.depth}m</strong>
+              </span>
+              {hoveredPoint.reconTemp !== null && (
+                <span className="text-[#3b49df]">
+                  Recon: <strong>{hoveredPoint.reconTemp.toFixed(2)}°C</strong>
+                </span>
+              )}
+              {hoveredPoint.argoTemp !== null && (
+                <span className="text-[#e11d48]">
+                  Argo: <strong>{hoveredPoint.argoTemp.toFixed(2)}°C</strong>
+                </span>
+              )}
+              {hoveredPoint.reconTemp !== null && hoveredPoint.argoTemp !== null && (
+                <span className="text-[#64748d]">
+                  ΔT: <strong className={Math.abs(hoveredPoint.reconTemp - hoveredPoint.argoTemp) < 0.05 ? 'text-[#64748d]' : hoveredPoint.reconTemp > hoveredPoint.argoTemp ? 'text-[#b45309]' : 'text-[#0284c7]'}>
+                    {(hoveredPoint.reconTemp - hoveredPoint.argoTemp > 0 ? '+' : '') +
+                      (hoveredPoint.reconTemp - hoveredPoint.argoTemp).toFixed(2)}°C
+                  </strong>
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 font-mono text-[#64748d]">
+              <span className="flex items-center gap-1.5 font-sans font-medium text-[#0d253d]">
+                <span className="w-2.5 h-0.5 bg-[#3b49df] rounded-full inline-block" />
+                OceanEmbed Recon
+              </span>
+              {reconstruction?.argo_comparison && (
+                <span className="flex items-center gap-1.5 font-sans font-medium text-[#e11d48]">
+                  <span className="w-2.5 h-0.5 border-b border-dashed border-[#e11d48] inline-block" />
+                  In-Situ Argo ({reconstruction.argo_comparison.float_id})
+                </span>
+              )}
+              {reconstruction?.d26_depth_m !== null && reconstruction?.d26_depth_m !== undefined && (
+                <span className="flex items-center gap-1.5 text-[#b45309]">
+                  <span className="w-2 h-2 rounded-full bg-[#d97706]/20 border border-[#d97706] inline-block" />
+                  D26: {reconstruction.d26_depth_m}m
+                </span>
+              )}
+            </div>
+          )}
         </div>
-      )}
+      </div>
+
+      {/* Main Chart Viewport */}
+      <div className="relative flex-1 w-full min-h-0">
+        {/* TradingView Chart Container */}
+        <div ref={containerRef} className="w-full h-full" />
+
+        {/* Empty State Overlay if no reconstruction is loaded */}
+        {!reconstruction && !loading && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-white/95 z-10 pointer-events-none">
+            <div className="text-sm font-semibold text-[#0d253d] mb-1">
+              No Reconstruction Profile Loaded
+            </div>
+            <div className="text-xs text-[#64748d] max-w-sm leading-relaxed">
+              Select coordinates on the map and click &ldquo;Reconstruct Profile&rdquo; to inspect the subsurface thermal sounding.
+            </div>
+          </div>
+        )}
+
+        {/* Loading Overlay */}
+        {loading && (
+          <div className="absolute inset-0 bg-white/90 backdrop-blur-xs flex items-center justify-center text-[#533afd] font-mono text-sm gap-2 z-20">
+            <Loader2 className="size-4 animate-spin" />
+            <span className="font-medium text-[#0d253d]">Synthesizing 15-Depth Thermal Profile...</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
-

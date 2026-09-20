@@ -37,7 +37,7 @@ export const ModelSpecsDialog: React.FC<ModelSpecsDialogProps> = ({
 
         <div className="space-y-4 text-xs leading-relaxed text-[#273951]">
           {/* Domain & Depths */}
-          <div className="border border-[#e3e8ee] rounded-lg p-3.5 space-y-2 bg-white">
+          <div className="border border-[#e3e8ee] rounded-xl p-3.5 space-y-2 bg-white">
             <div className="font-semibold text-xs text-[#0d253d] uppercase tracking-wider">
               Geographic Domain & Standard Output Depths
             </div>
@@ -53,7 +53,7 @@ export const ModelSpecsDialog: React.FC<ModelSpecsDialogProps> = ({
               {STANDARD_DEPTHS_M.map((depth) => (
                 <span
                   key={depth}
-                  className="px-2 py-0.5 rounded bg-[#f8fafc] text-[#0d253d] border border-[#e2e8f0]"
+                  className="px-2 py-0.5 rounded-md bg-[#f8fafc] text-[#0d253d] border border-[#e2e8f0]"
                 >
                   {depth}m
                 </span>
@@ -61,7 +61,7 @@ export const ModelSpecsDialog: React.FC<ModelSpecsDialogProps> = ({
             </div>
           </div>
           {/* Neural Architecture */}
-          <div className="border border-[#e3e8ee] rounded-lg p-3.5 space-y-2 bg-white">
+          <div className="border border-[#e3e8ee] rounded-xl p-3.5 space-y-2 bg-white">
             <div className="font-semibold text-xs text-[#0d253d] uppercase tracking-wider">
               Dual-Path Neural Architecture & 128-D Latent Bottleneck
             </div>
@@ -85,36 +85,36 @@ export const ModelSpecsDialog: React.FC<ModelSpecsDialogProps> = ({
           </div>
 
           {/* 7 Satellite Data Channels */}
-          <div className="border border-[#e3e8ee] rounded-lg p-3.5 space-y-2 bg-white">
+          <div className="border border-[#e3e8ee] rounded-xl p-3.5 space-y-2 bg-white">
             <div className="font-semibold text-xs text-[#0d253d] uppercase tracking-wider">
               Multi-Source Satellite Boundary Drivers (7 Channels)
             </div>
             <div className="grid grid-cols-2 gap-2 font-mono text-[11px] pt-1">
-              <div className="p-2.5 bg-[#f8fafc] rounded border border-[#e2e8f0]">
+              <div className="p-2.5 bg-[#f8fafc] rounded-lg border border-[#e2e8f0]">
                 <span className="text-[#64748d] block text-[10px] uppercase font-sans">Sea Surface Temp (SST)</span>
                 <span className="text-[#0d253d] font-semibold">OSTIA (0.05°) · CMEMS</span>
               </div>
-              <div className="p-2.5 bg-[#f8fafc] rounded border border-[#e2e8f0]">
+              <div className="p-2.5 bg-[#f8fafc] rounded-lg border border-[#e2e8f0]">
                 <span className="text-[#64748d] block text-[10px] uppercase font-sans">Sea Surface Salinity (SSS)</span>
                 <span className="text-[#0d253d] font-semibold">SMAP / SMOS L4 · NASA JPL</span>
               </div>
-              <div className="p-2.5 bg-[#f8fafc] rounded border border-[#e2e8f0]">
+              <div className="p-2.5 bg-[#f8fafc] rounded-lg border border-[#e2e8f0]">
                 <span className="text-[#64748d] block text-[10px] uppercase font-sans">Sea Surface Height (SSH/SLA)</span>
                 <span className="text-[#0d253d] font-semibold">DUACS Altimetry · CMEMS</span>
               </div>
-              <div className="p-2.5 bg-[#f8fafc] rounded border border-[#e2e8f0]">
+              <div className="p-2.5 bg-[#f8fafc] rounded-lg border border-[#e2e8f0]">
                 <span className="text-[#64748d] block text-[10px] uppercase font-sans">Surface Currents (U, V)</span>
                 <span className="text-[#0d253d] font-semibold">OSCAR L4 OC (0.25°) · PO.DAAC</span>
               </div>
             </div>
-            <div className="p-2.5 bg-[#f8fafc] rounded border border-[#e2e8f0] font-mono text-[11px]">
+            <div className="p-2.5 bg-[#f8fafc] rounded-lg border border-[#e2e8f0] font-mono text-[11px]">
               <span className="text-[#64748d] block text-[10px] uppercase font-sans">10m Surface Winds (U, V)</span>
               <span className="text-[#0d253d] font-semibold">CCMP v3.1 / ASCAT-C (0.25°) · PO.DAAC / EUMETSAT</span>
             </div>
           </div>
 
           {/* Validation Protocol */}
-          <div className="border border-[#e3e8ee] rounded-lg p-3.5 space-y-2 bg-white">
+          <div className="border border-[#e3e8ee] rounded-xl p-3.5 space-y-2 bg-white">
             <div className="font-semibold text-xs text-[#0d253d] uppercase tracking-wider">
               Validation Protocol & Integrity Guardrails
             </div>
@@ -132,7 +132,7 @@ export const ModelSpecsDialog: React.FC<ModelSpecsDialogProps> = ({
           </div>
 
           {/* Guardrail Warning */}
-          <div className="p-3 rounded-lg bg-[#f8fafc] border border-[#e2e8f0] text-xs text-[#64748d]">
+          <div className="p-3.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-xs text-[#64748d]">
             <b className="text-[#0d253d]">Scientific Guardrail:</b> OceanIQ reconstructs subsurface thermal structure from multi-source satellite surface observations. It complements sparse in-situ arrays but does not replace Argo floats, moorings, or research vessels.
           </div>
         </div>

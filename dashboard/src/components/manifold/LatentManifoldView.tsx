@@ -118,6 +118,23 @@ export const LatentManifoldView: React.FC<LatentManifoldViewProps> = ({
       },
       tooltip: {
         trigger: 'item',
+        axisPointer: {
+          show: true,
+          type: 'cross',
+          lineStyle: {
+            color: '#94a3b8',
+            width: 1,
+            type: 'dashed',
+          },
+          label: {
+            backgroundColor: '#0d253d',
+            color: '#ffffff',
+            fontSize: 11,
+            fontFamily: 'var(--font-mono, monospace)',
+            borderRadius: 4,
+            padding: [3, 6],
+          },
+        },
         backgroundColor: 'rgba(255, 255, 255, 0.98)',
         borderColor: '#e2e8f0',
         textStyle: { color: '#0d253d', fontSize: 13 },
@@ -173,7 +190,7 @@ export const LatentManifoldView: React.FC<LatentManifoldViewProps> = ({
         </span>
       </div>
 
-      <div className="rounded-lg border border-[#e3e8ee] bg-white p-2">
+      <div className="rounded-xl border border-[#e3e8ee] bg-white p-2.5 shadow-xs">
         <div ref={chartRef} style={{ width: '100%', height: `${height}px` }} />
       </div>
 

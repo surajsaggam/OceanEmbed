@@ -101,7 +101,7 @@ export const SurfaceDriversPanel: React.FC<SurfaceDriversPanelProps> = ({
       </div>
 
       {/* Publication-Quality Scientific Data Table */}
-      <div className="rounded-lg border border-[#e3e8ee] bg-white overflow-hidden">
+      <div className="rounded-xl border border-[#e3e8ee] bg-white overflow-hidden shadow-xs">
         <Table>
           <Table.ScrollContainer>
             <Table.Content aria-label="Multi-Source Satellite Surface Observations" className="w-full min-w-[700px] text-left text-sm border-collapse">
@@ -155,7 +155,7 @@ export const SurfaceDriversPanel: React.FC<SurfaceDriversPanelProps> = ({
       </div>
 
       {/* Derived Kinematics Strip */}
-      <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-2.5 rounded-lg bg-[#f8fafc] border border-[#e2e8f0] text-sm font-mono">
+      <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-2.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-sm font-mono">
         <div className="flex items-center gap-2">
           <span className="text-[#64748d] font-sans font-medium">Surface Current Drift:</span>
           <span className="text-[#0d253d] font-semibold tabular-nums">
