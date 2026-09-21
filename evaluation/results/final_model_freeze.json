@@ -1,0 +1,64 @@
+{
+  "status": "FROZEN_FINAL_CANDIDATE",
+  "freeze_timestamp_utc": "2026-09-19T12:30:00Z",
+  "final_primary_model": "Phase-1",
+  "checkpoint_path": "checkpoints/phase1/best.pt",
+  "checkpoint_sha256": "f3d99a9b9214efe92a4e8fb11bd49b759a62cfb5d991d1225fd1360362876b9b",
+  "checkpoint_epoch": 89,
+  "checkpoint_val_loss_2018": 0.5704948756357898,
+  "architecture": {
+    "model_name": "OceanEmbedNet",
+    "in_channels": 14,
+    "out_depths": 15,
+    "embedding_dim": 128,
+    "total_trainable_parameters": 525040,
+    "pathways": [
+      "Path A: MultiScaleSpatialCNN (local 3x3 + dilated 3x3)",
+      "Path B: PointwiseMLP (1x1 conv column encoder)",
+      "OceanEmbeddingFusion: Concatenation -> 1x1 projection -> GroupNorm(1, 128) -> GELU",
+      "AttentionGuidedDecoder: Spatial attention gate skip modulation -> 15 depth projection"
+    ]
+  },
+  "standard_depths_m": [
+    0, 5, 10, 20, 30, 50, 75, 100, 125, 150, 200, 300, 500, 700, 1000
+  ],
+  "training_split": {
+    "years": "2015-2017",
+    "num_days": 1096
+  },
+  "validation_split": {
+    "year": "2018",
+    "num_days": 365,
+    "overall_rmse": 0.7177593847115834,
+    "overall_r2": 0.8380340417226155
+  },
+  "temporal_test_split": {
+    "year": "2019",
+    "num_days": 365,
+    "overall_rmse": 0.7203102747599284,
+    "overall_r2": 0.8376398523648579,
+    "generalization_shift_vs_2018": 0.002550890048345,
+    "used_for_training": false
+  },
+  "ablations_evaluated": {
+    "phase2_temporal_trends": {
+      "channels": 16,
+      "features": "14 Phase-1 + Delta_SST + Delta_SSH",
+      "2018_val_rmse": 0.7240,
+      "2019_test_rmse": 0.7259,
+      "conclusion": "Ablation only; did not improve baseline."
+    },
+    "phase4a_vertical_gradient_loss": {
+      "channels": 14,
+      "objective": "L_MSE + 2.0 * L_gradient",
+      "2018_val_rmse": 0.7148,
+      "2019_test_rmse": 0.7216,
+      "conclusion": "Informative ablation only; did not improve 50-150m aggregate or out-of-sample generalization over Phase-1."
+    }
+  },
+  "inference_policy": {
+    "mode": "evaluation_only",
+    "requires_grad": false,
+    "zero_optimizer_state": true
+  }
+}

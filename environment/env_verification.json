@@ -1,0 +1,20 @@
+{
+  "python_version": "3.11.3",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "checks": {
+    "torch_import": "PASS",
+    "cuda_available": "PASS",
+    "gpu_identity": "PASS",
+    "gpu_tensor_op": "PASS",
+    "bf16_amp": "PASS",
+    "fp16_amp": "PASS",
+    "vram_measured": "PASS"
+  },
+  "torch_version": "2.11.0+cu128",
+  "cuda_available": true,
+  "gpu_name": "NVIDIA GeForce RTX 5060 Laptop GPU",
+  "cuda_version": "12.8",
+  "vram_total_gb": 8.52,
+  "vram_free_gb": 7.33,
+  "recommended_precision": "bf16"
+}

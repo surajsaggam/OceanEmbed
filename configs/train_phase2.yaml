@@ -1,0 +1,48 @@
+# ============================================================
+# OceanEmbed — Training Configuration (Phase 2)
+# ============================================================
+
+experiment_name: phase2_temporal_trends
+
+# ── Reproducibility ───────────────────────────────────────────
+seed: 42
+
+# ── Input channels ────────────────────────────────────────────
+in_channels: 16
+
+# ── Batch / Memory ────────────────────────────────────────────
+batch_size: 4
+grad_accumulation: 2    # effective batch = batch_size × grad_accumulation = 8
+
+# ── Precision ─────────────────────────────────────────────────
+precision: "bf16"
+
+# ── Optimiser ─────────────────────────────────────────────────
+optimizer: "adam"          # options: adam | adamw
+learning_rate: 1.0e-4
+weight_decay: 0.0          # use >0 with adamw if selected
+
+# ── LR Schedule ───────────────────────────────────────────────
+lr_scheduler: "cosine"     # CosineAnnealingLR
+lr_min: 1.0e-6             # minimum LR at end of cosine cycle
+
+# ── Training duration ─────────────────────────────────────────
+epochs: 100
+patience: 15               # early stopping patience on val loss
+
+# ── Gradient ─────────────────────────────────────────────────
+gradient_clip: 1.0         # max gradient norm (0 = disabled)
+
+# ── DataLoader ────────────────────────────────────────────────
+num_workers: 4
+pin_memory: true
+shuffle_train: true
+
+# ── Checkpointing ─────────────────────────────────────────────
+checkpoint_dir: checkpoints/phase2/
+save_top_k: 3              # keep top-k checkpoints by val loss
+resume_from: null          # set to checkpoint path to resume
+
+# ── Logging ───────────────────────────────────────────────────
+log_every_n_steps: 50
+val_every_n_epochs: 1

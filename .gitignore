@@ -47,7 +47,60 @@ checkpoints/
 # IDE / OS
 .vscode/
 .idea/
+# OceanEmbed ML Workspace — .gitignore
+
+# ── Data (large, never committed) ──────────────────────────────────────────
+data/
+
+# ── Checkpoints (large model weights) ──────────────────────────────────────
+checkpoints/
+
+# ── Results (derived, reproducible from code + data) ───────────────────────
+/results/
+
+# ── Python environment ──────────────────────────────────────────────────────
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# ── Jupyter ─────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ── IDE / OS ─────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
 *.swp
 *.swo
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# ── Secrets / credentials (NEVER committed) ──────────────────────────────────
+.env
+*.env
+.env.*
+.netrc
+_netrc
+.copernicusmarine/
+credentials.json
+secrets.yaml
+*.key
+*.pem
+
+# ── Temporary files ──────────────────────────────────────────────────────────
+*.log
+*.tmp
+*.bak
+
+# ── COMMITTED (explicitly NOT ignored) ───────────────────────────────────────
+# environment/env_verification.json   ← tracked (GPU/CUDA/AMP report)
+# configs/*.yaml                       ← tracked (all experiment config)
+# requirements.txt                     ← tracked (pinned environment)

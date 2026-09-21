@@ -1,0 +1,26 @@
+# ============================================================
+# OceanEmbed — Model Configuration (Phase 2)
+# ============================================================
+# Scientific constants:
+in_channels:   16   # 14 Phase-1 channels (7 physical + 7 validity masks) + Delta_SST + Delta_SSH
+embedding_dim: 128  # explicit Ocean Embedding dimension (LOCKED)
+out_depths:    15   # temperature outputs at 15 standard depths (LOCKED)
+
+# ── PATH A: Multi-scale CNN ───────────────────────────────────
+cnn_local_channels:     64   # local 3×3 branch output channels
+cnn_dilated_channels:   64   # dilated 3×3 branch output channels
+cnn_dilation:           2    # dilation factor (effective RF ~5×5)
+cnn_spatial_out_channels: 128  # after PATH A concat + 1×1 projection
+
+# ── PATH B: Pointwise MLP ─────────────────────────────────────
+mlp_hidden_channels: 64
+mlp_out_channels:    64
+mlp_norm: "none"
+
+# ── Embedding / Fusion ────────────────────────────────────────
+# GroupNorm(1, embedding_dim) in models/embedding.py
+
+# ── Attention-guided Decoder ──────────────────────────────────
+dec_channels_1: 64   # first decoder conv output channels
+dec_channels_2: 32   # second decoder conv output channels
+attention_gate: "spatial"

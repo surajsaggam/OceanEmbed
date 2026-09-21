@@ -1,0 +1,43 @@
+# ============================================================
+# OceanEmbed — Evaluation Configuration
+# ============================================================
+
+# ── Depth levels (matches data.yaml — kept here for eval independence) ──
+depths_m: [0, 5, 10, 20, 30, 50, 75, 100, 125, 150, 200, 300, 500, 700, 1000]
+
+# ── Argo blind evaluation guard ────────────────────────────────
+# HARD RULE: This flag must remain false until ALL of the following
+# are true and documented:
+#   1. Phase-1 model architecture is locked (no further changes)
+#   2. All ablations are complete and winners are chosen
+#   3. The blind evaluation protocol is written and reviewed
+#      (date range, spatial matching radius, temporal matching window,
+#       number of matched profiles, metrics to report)
+# Set to true ONLY when the above conditions are met.
+# The evaluation code asserts this flag at runtime.
+argo_blind_locked: false
+
+# ── Argo matching parameters (for when evaluation is unlocked) ──
+argo_matching:
+  spatial_radius_deg: 0.5    # match model output within ±0.5° of Argo position
+  temporal_window_days: 1    # match to the same day (Argo profile date)
+  min_depth_coverage: 5      # minimum number of valid Argo depth levels required
+
+# ── Output paths ───────────────────────────────────────────────
+results_dir: results/
+
+# ── Seasonal breakdown labels ──────────────────────────────────
+seasons:
+  DJF: [12, 1, 2]
+  MAM: [3, 4, 5]
+  JJA: [6, 7, 8]
+  SON: [9, 10, 11]
+
+# ── Regional breakdown ─────────────────────────────────────────
+regions:
+  arabian_sea:
+    lat: [5.0, 25.0]
+    lon: [45.0, 75.0]
+  bay_of_bengal:
+    lat: [5.0, 25.0]
+    lon: [80.0, 100.0]
