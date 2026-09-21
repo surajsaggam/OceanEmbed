@@ -38,7 +38,7 @@ class Settings(BaseModel):
     ]
 
     # Provider Mode: "mock" or "real"
-    DEFAULT_PROVIDER: str = "mock"
+    DEFAULT_PROVIDER: str = "real"
 
 
 settings = Settings()

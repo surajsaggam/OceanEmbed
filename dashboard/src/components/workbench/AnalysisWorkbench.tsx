@@ -109,7 +109,7 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
                 )}
 
                 {argo && argo.rmse !== null && argo.rmse !== undefined && (
-                  <span title="RMSE vs collocated synthetic Argo float profile">
+                  <span title="RMSE vs collocated in-situ Argo float profile">
                     Argo RMSE: <strong className="text-[#e11d48] font-medium tabular-nums">{argo.rmse.toFixed(2)}°C</strong>
                   </span>
                 )}
@@ -245,7 +245,7 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
                     </span>
                   )}
                   {argo && argo.rmse !== null && argo.rmse !== undefined && (
-                    <span title="RMSE vs collocated synthetic Argo float profile">
+                    <span title="RMSE vs collocated in-situ Argo float profile">
                       Argo RMSE: <strong className="text-[#e11d48] font-medium tabular-nums">{argo.rmse.toFixed(2)}°C</strong>
                     </span>
                   )}
