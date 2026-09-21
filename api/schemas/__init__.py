@@ -12,6 +12,7 @@ from api.schemas.reconstruction import (
     ReconstructionResponse,
     ModelMetadata,
 )
+from api.schemas.history import ReconstructionHistoryItem
 
 __all__ = [
     "SurfaceContext",
@@ -22,4 +23,6 @@ __all__ = [
     "ReconstructionRequest",
     "ReconstructionResponse",
     "ModelMetadata",
+    "ReconstructionHistoryItem",
 ]
+

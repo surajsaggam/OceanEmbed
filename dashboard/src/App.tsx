@@ -19,8 +19,10 @@ export function App() {
     clearError,
     reconstruction,
     scatterData,
+    history,
     executeReconstruction,
     selectPreset,
+    selectHistoryItem,
   } = useOceanEmbed({
     initialDate: '2023-06-15',
     initialLatitude: 18.5,
@@ -61,12 +63,15 @@ export function App() {
         latitude={latitude}
         longitude={longitude}
         loading={loading}
+        history={history}
         onDateChange={setDate}
         onLatitudeChange={setLatitude}
         onLongitudeChange={setLongitude}
         onReconstruct={() => executeReconstruction()}
         onSelectPreset={handleSelectPreset}
+        onSelectHistoryItem={selectHistoryItem}
       />
+
 
       {/* Runtime / API Error Banner */}
       {error && (

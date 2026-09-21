@@ -40,5 +40,9 @@ class Settings(BaseModel):
     # Provider Mode: "mock" or "real"
     DEFAULT_PROVIDER: str = "real"
 
+    # Reconstruction History Database
+    HISTORY_DB_PATH: str = "data/history.db"
+
 
 settings = Settings()
+

@@ -4,21 +4,23 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { ComboBox, Input, Label, ListBox } from '@heroui/react';
+import { ComboBox, Input, Label, ListBox, Header } from '@heroui/react';
 import { OCEAN_PRESETS } from '@/data/presets';
 import { isWithinNioDomain, OBSERVATION_DATE_RANGE } from '@/lib/ocean';
-import type { OceanPreset } from '@/types/api';
+import type { OceanPreset, ReconstructionHistoryItem } from '@/types/api';
 
 interface TargetingStationBarProps {
   date: string;
   latitude: number;
   longitude: number;
   loading: boolean;
+  history?: ReconstructionHistoryItem[];
   onDateChange: (d: string) => void;
   onLatitudeChange: (lat: number) => void;
   onLongitudeChange: (lon: number) => void;
   onReconstruct: () => void;
   onSelectPreset: (preset: OceanPreset) => void;
+  onSelectHistoryItem?: (item: ReconstructionHistoryItem) => void;
 }
 
 export const TargetingStationBar: React.FC<TargetingStationBarProps> = ({
@@ -26,12 +28,15 @@ export const TargetingStationBar: React.FC<TargetingStationBarProps> = ({
   latitude,
   longitude,
   loading,
+  history = [],
   onDateChange,
   onLatitudeChange,
   onLongitudeChange,
   onReconstruct,
   onSelectPreset,
+  onSelectHistoryItem,
 }) => {
+
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const isValid = isWithinNioDomain(latitude, longitude);
 
@@ -58,13 +63,36 @@ export const TargetingStationBar: React.FC<TargetingStationBarProps> = ({
       Math.abs(p.longitude - longitude) < 0.05
   );
 
+  const activeHistoryItem = history.find(
+    (h) =>
+      Math.abs(h.latitude - latitude) < 0.05 &&
+      Math.abs(h.longitude - longitude) < 0.05 &&
+      h.date === date
+  );
+
+  const selectedKey = activePreset
+    ? activePreset.name
+    : activeHistoryItem
+    ? `history_${activeHistoryItem.id}`
+    : null;
+
   const handleRegimeChange = (key: React.Key | null) => {
     if (!key) return;
-    const preset = OCEAN_PRESETS.find((p) => p.name === String(key));
+    const keyStr = String(key);
+    if (keyStr.startsWith('history_')) {
+      const histId = parseInt(keyStr.replace('history_', ''), 10);
+      const histItem = history.find((h) => h.id === histId);
+      if (histItem && onSelectHistoryItem) {
+        onSelectHistoryItem(histItem);
+      }
+      return;
+    }
+    const preset = OCEAN_PRESETS.find((p) => p.name === keyStr);
     if (preset) {
       onSelectPreset(preset);
     }
   };
+
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && isValid && !loading) {
@@ -178,9 +206,9 @@ export const TargetingStationBar: React.FC<TargetingStationBarProps> = ({
         {/* Oceanographic Regime HeroUI ComboBox */}
         <div>
           <ComboBox
-            selectedKey={activePreset ? activePreset.name : null}
+            selectedKey={selectedKey}
             onSelectionChange={handleRegimeChange}
-            className="w-56 sm:w-64"
+            className="w-60 sm:w-72"
           >
             <Label className="block text-[11px] font-semibold text-[#64748d] mb-1.5 uppercase tracking-wider">
               Oceanographic Regime
@@ -192,30 +220,84 @@ export const TargetingStationBar: React.FC<TargetingStationBarProps> = ({
               />
               <ComboBox.Trigger className="text-[#64748d] hover:text-[#0d253d] transition-colors cursor-pointer shrink-0 flex items-center justify-center p-0.5" />
             </ComboBox.InputGroup>
-            <ComboBox.Popover className="min-w-[320px] w-80 bg-white border border-[#e3e8ee] shadow-xl rounded-xl p-1 z-50">
-              <ListBox className="outline-none space-y-1 p-1 max-h-[300px] overflow-y-auto">
-                {OCEAN_PRESETS.map((p) => (
-                  <ListBox.Item
-                    key={p.name}
-                    id={p.name}
-                    textValue={p.name}
-                    className="w-full text-left p-2.5 rounded-lg flex items-start justify-between gap-2 transition-colors cursor-pointer outline-none hover:bg-[#f8fafc] data-[selected=true]:bg-[#f1f5f9] data-[focused=true]:bg-[#f8fafc]"
-                  >
-                    <div className="flex flex-col flex-1 min-w-0">
-                      <span className="text-sm font-medium text-[#0d253d]">
-                        {p.name}
+            <ComboBox.Popover className="min-w-[340px] w-96 bg-white border border-[#e3e8ee] shadow-xl rounded-xl p-1 z-50">
+              <ListBox className="outline-none space-y-2 p-1 max-h-[380px] overflow-y-auto">
+                {/* Station Presets Section */}
+                <ListBox.Section key="presets-section">
+                  <Header className="px-2.5 py-1 text-[10px] font-bold text-[#64748d] uppercase tracking-wider bg-slate-50/90 rounded border-b border-slate-100 mb-1 flex items-center justify-between">
+                    <span>Station Presets</span>
+                    <span className="text-[10px] font-mono text-[#94a3b8] font-normal">{OCEAN_PRESETS.length} stations</span>
+                  </Header>
+                  {OCEAN_PRESETS.map((p) => (
+                    <ListBox.Item
+                      key={p.name}
+                      id={p.name}
+                      textValue={p.name}
+                      className="w-full text-left p-2.5 rounded-lg flex items-start justify-between gap-2 transition-colors cursor-pointer outline-none hover:bg-[#f8fafc] data-[selected=true]:bg-[#f1f5f9] data-[focused=true]:bg-[#f8fafc]"
+                    >
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <span className="text-sm font-medium text-[#0d253d]">
+                          {p.name}
+                        </span>
+                        <span className="text-[13px] font-mono text-[#64748d] mt-0.5">
+                          {p.latitude}°N, {p.longitude}°E · {p.region}
+                        </span>
+                      </div>
+                      <ListBox.ItemIndicator className="text-[#533afd] size-4 shrink-0 mt-0.5" />
+                    </ListBox.Item>
+                  ))}
+                </ListBox.Section>
+
+                {/* Recent Reconstructions Section */}
+                <ListBox.Section key="history-section" className="border-t border-[#e2e8f0] pt-2 mt-1">
+                  <Header className="px-2.5 py-1 text-[10px] font-bold text-[#64748d] uppercase tracking-wider bg-slate-50/90 rounded border-b border-slate-100 mb-1 flex items-center justify-between">
+                    <span>Recent Reconstructions</span>
+                    {history && history.length > 0 && (
+                      <span className="text-[10px] font-mono text-[#94a3b8] font-normal">
+                        {history.length} {history.length === 1 ? 'entry' : 'entries'}
                       </span>
-                      <span className="text-[13px] font-mono text-[#64748d] mt-0.5">
-                        {p.latitude}°N, {p.longitude}°E · {p.region}
-                      </span>
-                    </div>
-                    <ListBox.ItemIndicator className="text-[#533afd] size-4 shrink-0 mt-0.5" />
-                  </ListBox.Item>
-                ))}
+                    )}
+                  </Header>
+                  {history && history.length > 0 ? (
+                    history.map((item) => (
+                      <ListBox.Item
+                        key={`history_${item.id}`}
+                        id={`history_${item.id}`}
+                        textValue={`${item.regime} ${item.date}`}
+                        className="w-full text-left p-2.5 rounded-lg flex items-start justify-between gap-2 transition-colors cursor-pointer outline-none hover:bg-[#f8fafc] data-[selected=true]:bg-[#f1f5f9] data-[focused=true]:bg-[#f8fafc]"
+                      >
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-medium text-[#0d253d] truncate">
+                              {item.regime}
+                            </span>
+                            <span className="text-[11px] font-mono text-[#64748d] shrink-0 font-normal">
+                              {item.date}
+                            </span>
+                          </div>
+                          <span className="text-[12px] font-mono text-[#64748d] mt-0.5">
+                            {item.latitude.toFixed(2)}°N, {item.longitude.toFixed(2)}°E
+                          </span>
+                        </div>
+                        <ListBox.ItemIndicator className="text-[#533afd] size-4 shrink-0 mt-0.5" />
+                      </ListBox.Item>
+                    ))
+                  ) : (
+                    <ListBox.Item
+                      id="empty-history"
+                      isDisabled
+                      textValue="No recent reconstructions"
+                      className="w-full p-2.5 text-xs text-[#94a3b8] italic pointer-events-none"
+                    >
+                      No recent reconstructions yet
+                    </ListBox.Item>
+                  )}
+                </ListBox.Section>
               </ListBox>
             </ComboBox.Popover>
           </ComboBox>
         </div>
+
 
         {/* Primary Reconstruction Action Button */}
         <div>

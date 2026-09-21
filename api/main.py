@@ -13,6 +13,7 @@ from api.routes import (
     reconstruct_router,
     embedding_router,
     argo_router,
+    history_router,
 )
 
 app = FastAPI(
@@ -37,6 +38,8 @@ app.include_router(health_router, prefix=settings.API_V1_STR)
 app.include_router(reconstruct_router, prefix=settings.API_V1_STR)
 app.include_router(embedding_router, prefix=settings.API_V1_STR)
 app.include_router(argo_router, prefix=settings.API_V1_STR)
+app.include_router(history_router, prefix=settings.API_V1_STR)
+
 
 
 @app.get("/", tags=["Root"])

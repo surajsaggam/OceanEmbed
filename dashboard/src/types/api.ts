@@ -106,3 +106,13 @@ export interface OceanPreset {
   date: string;
   region: string;
 }
+
+export interface ReconstructionHistoryItem {
+  id: number;
+  date: string;
+  latitude: number;
+  longitude: number;
+  regime: string;
+  timestamp: string;
+}
+

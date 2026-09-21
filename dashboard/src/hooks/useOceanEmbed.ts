@@ -3,13 +3,16 @@ import {
   fetchHealth,
   reconstructProfile,
   fetchEmbeddingScatter,
+  fetchReconstructionHistory,
 } from '../services/api';
 import type {
   ReconstructionResponse,
   EmbeddingScatterResponse,
   HealthResponse,
   OceanPreset,
+  ReconstructionHistoryItem,
 } from '../types/api';
+
 
 export interface UseOceanEmbedOptions {
   initialDate?: string;
@@ -36,8 +39,18 @@ export function useOceanEmbed(options: UseOceanEmbedOptions = {}) {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [reconstruction, setReconstruction] = useState<ReconstructionResponse | null>(null);
   const [scatterData, setScatterData] = useState<EmbeddingScatterResponse | null>(null);
+  const [history, setHistory] = useState<ReconstructionHistoryItem[]>([]);
 
-  // Initialize server health status and latent manifold data
+  const refreshHistory = useCallback(async () => {
+    try {
+      const items = await fetchReconstructionHistory();
+      setHistory(items);
+    } catch (err) {
+      console.error('Failed to load reconstruction history:', err);
+    }
+  }, []);
+
+  // Initialize server health status, latent manifold data, and history
   useEffect(() => {
     let isMounted = true;
 
@@ -54,6 +67,13 @@ export function useOceanEmbed(options: UseOceanEmbedOptions = {}) {
         if (isMounted) setScatterData(scat);
       } catch (err: unknown) {
         console.error('Embedding scatter fetch failed:', err);
+      }
+
+      try {
+        const hist = await fetchReconstructionHistory();
+        if (isMounted) setHistory(hist);
+      } catch (err: unknown) {
+        console.error('Initial history fetch failed:', err);
       }
     }
 
@@ -75,6 +95,8 @@ export function useOceanEmbed(options: UseOceanEmbedOptions = {}) {
           longitude: targetLon,
         });
         setReconstruction(resp);
+        // Refresh persistent history to include this latest reconstruction
+        refreshHistory();
         return resp;
       } catch (err: any) {
         console.error('Reconstruction failed:', err);
@@ -85,7 +107,7 @@ export function useOceanEmbed(options: UseOceanEmbedOptions = {}) {
         setLoading(false);
       }
     },
-    [latitude, longitude, date]
+    [latitude, longitude, date, refreshHistory]
   );
 
   // Initial station reconstruction on mount
@@ -107,6 +129,16 @@ export function useOceanEmbed(options: UseOceanEmbedOptions = {}) {
     [executeReconstruction]
   );
 
+  const selectHistoryItem = useCallback(
+    (item: ReconstructionHistoryItem) => {
+      setLatitude(item.latitude);
+      setLongitude(item.longitude);
+      setDate(item.date);
+      return executeReconstruction(item.latitude, item.longitude, item.date);
+    },
+    [executeReconstruction]
+  );
+
   const clearError = useCallback(() => {
     setError(null);
   }, []);
@@ -124,7 +156,11 @@ export function useOceanEmbed(options: UseOceanEmbedOptions = {}) {
     health,
     reconstruction,
     scatterData,
+    history,
+    refreshHistory,
     executeReconstruction,
     selectPreset,
+    selectHistoryItem,
   };
 }
+
