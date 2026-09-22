@@ -87,133 +87,61 @@ class RealOceanEmbedProvider(AbstractOceanEmbedProvider):
     def is_model_loaded(self) -> bool:
         return self._predictor is not None and self._predictor.model is not None
 
-    def _build_ocean_mask(self, lats: np.ndarray, lons: np.ndarray) -> np.ndarray:
-        """Generates boolean ocean mask (True=ocean, False=land) for the North Indian Ocean domain."""
-        H, W = len(lats), len(lons)
-        LON, LAT = np.meshgrid(lons, lats)
-        ocean = np.ones((H, W), dtype=bool)
+    def _load_preprocessed_observations(self, date_str: str) -> Optional[np.ndarray]:
+        """Loads real preprocessed 14-channel input array for a given date if available."""
+        clean_date = date_str.strip()[:10]
+        candidates = [
+            self._project_root / "data" / "processed" / "test" / f"oceanembed_{clean_date}.npz",
+            self._project_root / "data" / "processed" / f"oceanembed_{clean_date}.npz",
+        ]
+        for p in candidates:
+            if p.exists():
+                npz_data = np.load(p)
+                if "input" in npz_data:
+                    return npz_data["input"]
+        return None
 
-        # Indian Subcontinent (approximate triangular boundary)
-        peninsula = (
-            (LAT >= 8.0)
-            & (LAT <= 28.0)
-            & (LON >= 68.5)
-            & (LON <= 88.5)
-            & (LAT >= (LON - 68.5) * 0.9 + 8.0)
-            & (LAT >= (88.5 - LON) * 0.9 + 8.0)
-        )
-        ocean[peninsula] = False
-
-        # Northern land boundary (Himalayas / Pakistan / Iran / Afghanistan / China)
-        ocean[LAT >= 25.5] = False
-
-        # Western land boundary (Arabian Peninsula / Horn of Africa interior)
-        arabia = (LON <= 58.0) & (LAT >= 14.0) & (LON + (LAT - 14.0) * 1.2 <= 65.0)
-        ocean[arabia] = False
-
-        # Africa south of Red Sea
-        africa = (LON <= 51.0) & (LAT >= 11.0)
-        ocean[africa] = False
-
-        # Eastern boundary (Myanmar / Southeast Asia)
-        indochina = (LON >= 96.0) & (LAT >= 9.0)
-        ocean[indochina] = False
-
-        return ocean
-
-    def _prepare_surface_observations(
-        self, req_date: date, target_lat: float, target_lon: float
-    ) -> Tuple[Dict[str, np.ndarray], Dict[str, np.ndarray], SurfaceContext, str]:
-        """Prepares the 7 physical surface observation grids [101, 241] and validity masks."""
-        H, W = 101, 241
-        lats = np.linspace(settings.LAT_MIN, settings.LAT_MAX, H)
-        lons = np.linspace(settings.LON_MIN, settings.LON_MAX, W)
-        LON, LAT = np.meshgrid(lons, lats)
-
-        ocean_mask = self._build_ocean_mask(lats, lons)
-        month = req_date.month
-        is_sw_monsoon = month in [6, 7, 8, 9]
-
-        # 1. SST (°C): Tropical warm pool (28-30.5°C) with coastal upwelling cooling in summer
-        sst = 29.5 - 0.15 * (LAT - 10.0)
-        if is_sw_monsoon:
-            # Somali and Oman upwelling cooling
-            somali_upwelling = np.exp(-((LON - 52.0) ** 2) / 25.0 - ((LAT - 12.0) ** 2) / 36.0)
-            sst -= 4.0 * somali_upwelling
-
-        # 2. SSS (PSU): Bay of Bengal freshwater cap vs. Arabian Sea high evaporation
-        sss = 35.0 - 2.5 * np.exp(-((LON - 89.0) ** 2) / 70.0 - ((LAT - 19.0) ** 2) / 50.0)
-        arabian_saline = np.exp(-((LON - 64.0) ** 2) / 90.0 - ((LAT - 20.0) ** 2) / 50.0)
-        sss += 1.8 * arabian_saline
-
-        # 3. SSH (m): Sea Level Anomaly
-        ssh = 0.05 + 0.12 * np.exp(-((LON - 88.0) ** 2) / 80.0)
-        if is_sw_monsoon:
-            # Depressed sea surface in upwelling divergence
-            ssh -= 0.18 * np.exp(-((LON - 53.0) ** 2) / 30.0 - ((LAT - 13.0) ** 2) / 36.0)
-
-        # 4. Currents U, V (m/s)
-        if is_sw_monsoon:
-            u_curr = 0.25 * np.ones((H, W), dtype=np.float32)
-            v_curr = np.zeros((H, W), dtype=np.float32)
-            # Northward Somali boundary current
-            v_curr += 0.85 * np.exp(-((LON - 53.0) ** 2) / 20.0 - ((LAT - 12.0) ** 2) / 40.0)
-        else:
-            u_curr = -0.15 * np.ones((H, W), dtype=np.float32)
-            v_curr = -0.05 * np.ones((H, W), dtype=np.float32)
-
-        # 5. Winds U, V (m/s)
-        if is_sw_monsoon:
-            # Strong Southwesterly Findlater jet
-            u_wind = 6.5 + 3.0 * np.exp(-((LAT - 15.0) ** 2) / 40.0)
-            v_wind = 7.0 + 3.5 * np.exp(-((LON - 60.0) ** 2) / 50.0)
-        else:
-            # Northeasterly winter monsoon
-            u_wind = -4.0 * np.ones((H, W), dtype=np.float32)
-            v_wind = -3.5 * np.ones((H, W), dtype=np.float32)
-
-        # Determine regime label
-        if target_lon <= 62.0 and target_lat <= 18.0 and is_sw_monsoon:
-            regime = "Somali / Oman Upwelling Zone"
+    def _determine_regime(self, target_lat: float, target_lon: float) -> str:
+        """Determines oceanographic regime label based on geographic domain."""
+        if target_lon <= 60.0 and target_lat <= 15.0:
+            return "Somali / Oman Upwelling Zone"
         elif target_lon < 77.0:
-            regime = "Arabian Sea High-Salinity Water"
+            return "Arabian Sea High-Salinity Water"
         elif target_lon >= 82.0 and target_lat >= 16.0:
-            regime = "Bay of Bengal Freshwater Plume"
-        elif target_lon >= 77.0:
-            regime = "Central Bay of Bengal"
+            return "Bay of Bengal Freshwater Plume"
+        elif target_lon >= 77.0 and target_lat >= 10.0:
+            return "Central Bay of Bengal"
         else:
-            regime = "Equatorial Warm Pool"
+            return "Equatorial Warm Pool"
 
-        # Assemble surface observation dict
-        obs: Dict[str, np.ndarray] = {
-            "SST": sst.astype(np.float32),
-            "SSS": sss.astype(np.float32),
-            "SSH": ssh.astype(np.float32),
-            "U_curr": u_curr.astype(np.float32),
-            "V_curr": v_curr.astype(np.float32),
-            "WindU": u_wind.astype(np.float32),
-            "WindV": v_wind.astype(np.float32),
-        }
-
-        # Validity masks: 1.0 for valid ocean, 0.0 for land
-        mask_arr = np.where(ocean_mask, 1.0, 0.0).astype(np.float32)
-        masks: Dict[str, np.ndarray] = {k: mask_arr.copy() for k in PHYSICAL_KEYS}
-
-        # Extract values at query point
+    def _extract_surface_context(
+        self, input_14: np.ndarray, target_lat: float, target_lon: float
+    ) -> SurfaceContext:
+        """Extracts and unnormalizes physical surface context variables at target coordinates."""
+        assert self._predictor is not None
+        stats = self._predictor.norm_stats
+        H, W = 101, 241
         lat_idx = int(np.clip(round((target_lat - settings.LAT_MIN) / 0.25), 0, H - 1))
         lon_idx = int(np.clip(round((target_lon - settings.LON_MIN) / 0.25), 0, W - 1))
 
-        surface_ctx = SurfaceContext(
-            sst_c=float(round(float(sst[lat_idx, lon_idx]), 2)),
-            sss_psu=float(round(float(sss[lat_idx, lon_idx]), 2)),
-            ssh_m=float(round(float(ssh[lat_idx, lon_idx]), 3)),
-            current_u_ms=float(round(float(u_curr[lat_idx, lon_idx]), 3)),
-            current_v_ms=float(round(float(v_curr[lat_idx, lon_idx]), 3)),
-            wind_u_ms=float(round(float(u_wind[lat_idx, lon_idx]), 2)),
-            wind_v_ms=float(round(float(v_wind[lat_idx, lon_idx]), 2)),
-        )
+        # Unnormalize z-scores: physical_val = norm_val * std + mean
+        sst_val = float(input_14[0, lat_idx, lon_idx] * stats["SST"]["std"] + stats["SST"]["mean"])
+        sss_val = float(input_14[1, lat_idx, lon_idx] * stats["SSS"]["std"] + stats["SSS"]["mean"])
+        ssh_val = float(input_14[2, lat_idx, lon_idx] * stats["SSH"]["std"] + stats["SSH"]["mean"])
+        u_curr_val = float(input_14[3, lat_idx, lon_idx] * stats["U_curr"]["std"] + stats["U_curr"]["mean"])
+        v_curr_val = float(input_14[4, lat_idx, lon_idx] * stats["V_curr"]["std"] + stats["V_curr"]["mean"])
+        wind_u_val = float(input_14[5, lat_idx, lon_idx] * stats["WindU"]["std"] + stats["WindU"]["mean"])
+        wind_v_val = float(input_14[6, lat_idx, lon_idx] * stats["WindV"]["std"] + stats["WindV"]["mean"])
 
-        return obs, masks, surface_ctx, regime
+        return SurfaceContext(
+            sst_c=round(sst_val, 2),
+            sss_psu=round(sss_val, 2),
+            ssh_m=round(ssh_val, 3),
+            current_u_ms=round(u_curr_val, 3),
+            current_v_ms=round(v_curr_val, 3),
+            wind_u_ms=round(wind_u_val, 2),
+            wind_v_ms=round(wind_v_val, 2),
+        )
 
     def _compute_d26(self, depths: List[int], temps: List[float]) -> Optional[float]:
         """Calculates D26 isotherm depth (meters) via linear interpolation."""
@@ -268,22 +196,28 @@ class RealOceanEmbedProvider(AbstractOceanEmbedProvider):
                 "Ensure checkpoints/phase1/best.pt and data/norm_stats/train_stats.json exist."
             )
 
-        req_date = date.fromisoformat(request.date)
+        # 1. Load real preprocessed 14-channel observations
+        input_14 = self._load_preprocessed_observations(request.date)
+        if input_14 is None:
+            raise ValueError(
+                f"No preprocessed surface observations found for date '{request.date}'. "
+                f"Available preprocessed date in dataset: '2019-01-01'. "
+                f"As required by OceanEmbed scientific integrity protocols, synthetic surface data "
+                f"is not fabricated for unobserved dates."
+            )
 
-        # 1. Prepare 7 surface variables and validity masks
-        surface_obs, masks, surface_ctx, regime = self._prepare_surface_observations(
-            req_date, request.latitude, request.longitude
-        )
+        surface_ctx = self._extract_surface_context(input_14, request.latitude, request.longitude)
+        regime = self._determine_regime(request.latitude, request.longitude)
 
         # 2. Execute deterministic inference on frozen Phase-1 model
         assert self._predictor is not None
         pred_result = self._predictor.predict(
-            surface_observations=surface_obs,
-            masks=masks,
+            surface_observations=input_14,
             date=request.date,
             return_embedding=True,
             return_attention=True,
         )
+
 
         # 3. Extract vertical column profile at requested coordinates
         profile = extract_profile(pred_result, lat=request.latitude, lon=request.longitude)

@@ -23,11 +23,12 @@ export interface UseOceanEmbedOptions {
 
 export function useOceanEmbed(options: UseOceanEmbedOptions = {}) {
   const {
-    initialDate = '2023-06-15',
+    initialDate = '2019-01-01',
     initialLatitude = 18.5,
     initialLongitude = 88.25,
     autoReconstructOnMount = true,
   } = options;
+
 
   const [date, setDate] = useState<string>(initialDate);
   const [latitude, setLatitude] = useState<number>(initialLatitude);

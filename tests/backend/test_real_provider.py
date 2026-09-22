@@ -17,10 +17,10 @@ def test_provider_initialization(provider):
 
 
 def test_real_inference_execution(provider):
-    req = ReconstructionRequest(date="2023-06-15", latitude=18.5, longitude=88.25)
+    req = ReconstructionRequest(date="2019-01-01", latitude=18.5, longitude=88.25)
     resp = provider.predict_profile(req)
 
-    assert resp.date == "2023-06-15"
+    assert resp.date == "2019-01-01"
     assert resp.latitude == 18.5
     assert resp.longitude == 88.25
     assert len(resp.depths_m) == 15
@@ -34,6 +34,15 @@ def test_real_inference_execution(provider):
     assert isinstance(resp.embedding.pca_1, float)
     assert isinstance(resp.embedding.pca_2, float)
     assert resp.surface_context.sst_c > 0
+
+
+def test_unsupported_date_raises_error(provider):
+    # Enforces scientific integrity: synthetic data is NEVER fabricated for unobserved dates
+    req = ReconstructionRequest(date="2023-06-15", latitude=18.5, longitude=88.25)
+    with pytest.raises(ValueError) as excinfo:
+        provider.predict_profile(req)
+    assert "No preprocessed surface observations found" in str(excinfo.value)
+    assert "synthetic surface data is not fabricated" in str(excinfo.value)
 
 
 def test_derived_oceanographic_indices(provider):
@@ -51,9 +60,17 @@ def test_derived_oceanographic_indices(provider):
 
 
 def test_real_argo_lookup_behavior(provider):
-    # For coordinates without a matching in-situ float, verify None is returned (no mock fallback)
-    argo = provider.find_nearby_argo("2023-06-15", 18.5, 88.25)
-    assert argo is None or argo.is_mock is False
+    # Real Argo float exists on 2019-01-01 near 17.88°N, 66.24°E
+    argo = provider.find_nearby_argo("2019-01-01", 17.88, 66.24)
+    assert argo is not None
+    assert argo.is_mock is False
+    assert "WMO-2902201" in argo.float_id
+    assert len(argo.temperature_c) == 15
+
+    # Coordinates far from any in-situ float return None (no fake fallback)
+    argo_none = provider.find_nearby_argo("2019-01-01", 18.5, 88.25)
+    assert argo_none is None
+
 
 
 def test_embedding_scatter_points(provider):

@@ -84,7 +84,7 @@ def test_reconstruct_endpoint_auto_saves_to_history(setup_history):
     assert len(service.get_recent_history()) == 0
 
     payload = {
-        "date": "2023-06-15",
+        "date": "2019-01-01",
         "latitude": 18.5,
         "longitude": 88.25,
     }
@@ -97,7 +97,8 @@ def test_reconstruct_endpoint_auto_saves_to_history(setup_history):
     assert history_resp.status_code == 200
     history = history_resp.json()
     assert len(history) == 1
-    assert history[0]["date"] == "2023-06-15"
+    assert history[0]["date"] == "2019-01-01"
+
     assert history[0]["latitude"] == 18.5
     assert history[0]["longitude"] == 88.25
     assert history[0]["regime"] == recon_data["embedding"]["regime_label"]

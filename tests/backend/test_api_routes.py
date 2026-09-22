@@ -27,14 +27,14 @@ def test_health_endpoint():
 
 def test_reconstruct_endpoint_valid():
     payload = {
-        "date": "2023-06-15",
+        "date": "2019-01-01",
         "latitude": 18.5,
         "longitude": 88.25,
     }
     response = client.post("/api/reconstruct", json=payload)
     assert response.status_code == 200
     data = response.json()
-    assert data["date"] == "2023-06-15"
+    assert data["date"] == "2019-01-01"
     assert data["latitude"] == 18.5
     assert data["longitude"] == 88.25
     assert len(data["depths_m"]) == 15
@@ -46,10 +46,22 @@ def test_reconstruct_endpoint_valid():
     assert data["embedding"]["vector_dim"] == 128
 
 
+def test_reconstruct_endpoint_unsupported_date():
+    # Enforces scientific integrity: 400 Bad Request when observations are unavailable
+    payload = {
+        "date": "2023-06-15",
+        "latitude": 18.5,
+        "longitude": 88.25,
+    }
+    response = client.post("/api/reconstruct", json=payload)
+    assert response.status_code == 400
+    assert "No preprocessed surface observations found" in response.json()["detail"]
+
+
 def test_reconstruct_endpoint_out_of_bounds():
     # Lat 35 is out of North Indian Ocean domain (max 30.0)
     payload = {
-        "date": "2023-06-15",
+        "date": "2019-01-01",
         "latitude": 35.0,
         "longitude": 88.25,
     }
@@ -67,12 +79,26 @@ def test_embedding_endpoint():
     assert data["is_mock"] is False
 
 
+def test_argo_nearby_endpoint_collocated():
+    # Real Argo float exists on 2019-01-01 near 17.88°N, 66.24°E
+    response = client.get(
+        "/api/argo/nearby",
+        params={"date": "2019-01-01", "latitude": 17.88, "longitude": 66.24},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data is not None
+    assert "WMO-2902201" in data["float_id"]
+    assert len(data["temperature_c"]) == 15
+
+
 def test_argo_nearby_endpoint_held_out():
     # Demonstrates scientific integrity: returns None when no verified in-situ float exists
     response = client.get(
         "/api/argo/nearby",
-        params={"date": "2023-06-15", "latitude": 18.5, "longitude": 88.25},
+        params={"date": "2019-01-01", "latitude": 18.5, "longitude": 88.25},
     )
     assert response.status_code == 200
     data = response.json()
     assert data is None
+
