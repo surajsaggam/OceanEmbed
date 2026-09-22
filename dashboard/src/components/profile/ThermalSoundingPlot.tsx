@@ -125,7 +125,8 @@ export const ThermalSoundingPlot: React.FC<ThermalSoundingPlotProps> = ({
     // D26 isotherm horizontal reference line
     if (
       reconstruction.d26_depth_m !== null &&
-      reconstruction.d26_depth_m !== undefined
+      reconstruction.d26_depth_m !== undefined &&
+      reconstruction.d26_depth_m > 0
     ) {
       areaSeries.createPriceLine({
         price: 26.0,
@@ -243,10 +244,10 @@ export const ThermalSoundingPlot: React.FC<ThermalSoundingPlotProps> = ({
                   In-Situ Argo ({reconstruction.argo_comparison.float_id})
                 </span>
               )}
-              {reconstruction?.d26_depth_m !== null && reconstruction?.d26_depth_m !== undefined && (
+              {reconstruction?.d26_depth_m !== undefined && (
                 <span className="flex items-center gap-1.5 text-[#b45309]">
                   <span className="w-2 h-2 rounded-full bg-[#d97706]/20 border border-[#d97706] inline-block" />
-                  D26: {reconstruction.d26_depth_m}m
+                  D26: {reconstruction.d26_depth_m && reconstruction.d26_depth_m > 0 ? `${reconstruction.d26_depth_m}m` : 'Not reached'}
                 </span>
               )}
             </div>

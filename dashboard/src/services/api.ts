@@ -91,3 +91,38 @@ export async function fetchReconstructionHistory(
   return handleResponse<ReconstructionHistoryItem[]>(response);
 }
 
+export async function downloadReconstructionPdf(
+  reconstruction: ReconstructionResponse
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/report/pdf`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/pdf',
+    },
+    body: JSON.stringify(reconstruction),
+  });
+
+  if (!response.ok) {
+    let errorDetail = 'Failed to generate PDF report';
+    try {
+      const data = await response.json();
+      if (data.detail) errorDetail = data.detail;
+    } catch {
+      errorDetail = response.statusText;
+    }
+    throw new ApiError(response.status, errorDetail);
+  }
+
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.download = `OceanIQ_Report_${reconstruction.date}_${reconstruction.latitude.toFixed(2)}N_${reconstruction.longitude.toFixed(2)}E.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+}
+

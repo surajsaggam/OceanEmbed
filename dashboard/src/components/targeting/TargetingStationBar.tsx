@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Calendar } from '@/components/ui/calendar';
@@ -15,6 +15,9 @@ interface TargetingStationBarProps {
   longitude: number;
   loading: boolean;
   history?: ReconstructionHistoryItem[];
+  hasReconstruction?: boolean;
+  isGeneratingReport?: boolean;
+  onGenerateReport?: () => void;
   onDateChange: (d: string) => void;
   onLatitudeChange: (lat: number) => void;
   onLongitudeChange: (lon: number) => void;
@@ -29,6 +32,9 @@ export const TargetingStationBar: React.FC<TargetingStationBarProps> = ({
   longitude,
   loading,
   history = [],
+  hasReconstruction = false,
+  isGeneratingReport = false,
+  onGenerateReport,
   onDateChange,
   onLatitudeChange,
   onLongitudeChange,
@@ -322,6 +328,32 @@ export const TargetingStationBar: React.FC<TargetingStationBarProps> = ({
             )}
           </Button>
         </div>
+
+        {/* Generate Report Action Button */}
+        {hasReconstruction && (
+          <div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onGenerateReport}
+              disabled={isGeneratingReport || loading}
+              className="h-9 px-4 text-sm rounded-full font-medium border-[#cbd5e1] hover:border-[#533afd] hover:text-[#533afd] bg-white text-[#0d253d] active:scale-[0.985] transition-all cursor-pointer flex items-center gap-2 shadow-xs"
+              aria-label="Generate Technical PDF Report"
+            >
+              {isGeneratingReport ? (
+                <>
+                  <Spinner data-icon="inline-start" />
+                  <span>Generating PDF…</span>
+                </>
+              ) : (
+                <>
+                  <FileDown className="size-4 text-[#533afd]" aria-hidden="true" />
+                  <span>Generate Report</span>
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Domain Out-of-Bounds Warning */}

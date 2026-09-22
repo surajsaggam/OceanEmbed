@@ -96,9 +96,9 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
             {/* Diagnostic Metrics Readout */}
             {reconstruction && (
               <div className="flex items-center gap-3 font-mono text-sm text-[#64748d]">
-                {reconstruction.d26_depth_m !== null && reconstruction.d26_depth_m !== undefined && (
+                {reconstruction.d26_depth_m !== undefined && (
                   <span title="Depth of 26°C isotherm — Tropical Cyclone Heat Potential proxy">
-                    D26: <strong className="text-[#b45309] font-medium tabular-nums">{reconstruction.d26_depth_m}m</strong>
+                    D26: <strong className="text-[#b45309] font-medium tabular-nums">{reconstruction.d26_depth_m && reconstruction.d26_depth_m > 0 ? `${reconstruction.d26_depth_m}m` : 'Not reached'}</strong>
                   </span>
                 )}
 
@@ -234,9 +234,9 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
               {/* Diagnostic Metrics Readout */}
               {reconstruction && (
                 <div className="flex items-center gap-3 font-mono text-sm text-[#64748d]">
-                  {reconstruction.d26_depth_m !== null && reconstruction.d26_depth_m !== undefined && (
+                  {reconstruction.d26_depth_m !== undefined && (
                     <span title="Depth of 26°C isotherm">
-                      D26: <strong className="text-[#b45309] font-medium tabular-nums">{reconstruction.d26_depth_m}m</strong>
+                      D26: <strong className="text-[#b45309] font-medium tabular-nums">{reconstruction.d26_depth_m && reconstruction.d26_depth_m > 0 ? `${reconstruction.d26_depth_m}m` : 'Not reached'}</strong>
                     </span>
                   )}
                   {reconstruction.mixed_layer_depth_m !== null && reconstruction.mixed_layer_depth_m !== undefined && (

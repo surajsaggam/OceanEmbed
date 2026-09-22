@@ -144,10 +144,12 @@ class RealOceanEmbedProvider(AbstractOceanEmbedProvider):
         )
 
     def _compute_d26(self, depths: List[int], temps: List[float]) -> Optional[float]:
-        """Calculates D26 isotherm depth (meters) via linear interpolation."""
+        """Calculates D26 isotherm depth (meters) via linear interpolation.
+        Returns None if maximum profile temperature never reaches 26.0°C.
+        """
         target = 26.0
-        if temps[0] < target:
-            return 0.0
+        if not temps or max(temps) < target or min(temps) >= target:
+            return None
         for i in range(len(temps) - 1):
             t1, t2 = temps[i], temps[i + 1]
             z1, z2 = depths[i], depths[i + 1]

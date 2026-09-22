@@ -14,6 +14,7 @@ from api.routes import (
     embedding_router,
     argo_router,
     history_router,
+    report_router,
 )
 
 app = FastAPI(
@@ -39,6 +40,7 @@ app.include_router(reconstruct_router, prefix=settings.API_V1_STR)
 app.include_router(embedding_router, prefix=settings.API_V1_STR)
 app.include_router(argo_router, prefix=settings.API_V1_STR)
 app.include_router(history_router, prefix=settings.API_V1_STR)
+app.include_router(report_router, prefix=settings.API_V1_STR)
 
 
 
