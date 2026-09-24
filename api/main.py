@@ -16,6 +16,7 @@ from api.routes import (
     history_router,
     report_router,
     transect_router,
+    departure_router,
 )
 
 app = FastAPI(
@@ -39,10 +40,12 @@ app.add_middleware(
 app.include_router(health_router, prefix=settings.API_V1_STR)
 app.include_router(reconstruct_router, prefix=settings.API_V1_STR)
 app.include_router(transect_router, prefix=settings.API_V1_STR)
+app.include_router(departure_router, prefix=settings.API_V1_STR)
 app.include_router(embedding_router, prefix=settings.API_V1_STR)
 app.include_router(argo_router, prefix=settings.API_V1_STR)
 app.include_router(history_router, prefix=settings.API_V1_STR)
 app.include_router(report_router, prefix=settings.API_V1_STR)
+
 
 
 

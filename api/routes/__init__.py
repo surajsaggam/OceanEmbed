@@ -7,6 +7,7 @@ from api.routes.argo import router as argo_router
 from api.routes.history import router as history_router
 from api.routes.report import router as report_router
 from api.routes.transect import router as transect_router
+from api.routes.departure import router as departure_router
 
 __all__ = [
     "health_router",
@@ -16,6 +17,8 @@ __all__ = [
     "history_router",
     "report_router",
     "transect_router",
+    "departure_router",
 ]
+
 
 

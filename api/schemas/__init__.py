@@ -19,6 +19,12 @@ from api.schemas.transect import (
     TransectStation,
     TransectResponse,
 )
+from api.schemas.departure import (
+    DepthDepartureMetrics,
+    StationDepartureProfile,
+    DepartureRequest,
+    DepartureResponse,
+)
 
 __all__ = [
     "SurfaceContext",
@@ -34,5 +40,9 @@ __all__ = [
     "TransectRequest",
     "TransectStation",
     "TransectResponse",
+    "DepthDepartureMetrics",
+    "StationDepartureProfile",
+    "DepartureRequest",
+    "DepartureResponse",
 ]
 

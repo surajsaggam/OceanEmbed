@@ -149,6 +149,7 @@ export function App() {
         reconstruction={reconstruction}
         scatterData={scatterData}
         onSelectCoordinates={handleSelectCoordinates}
+        onSelectDate={setDate}
       />
     </div>
   );

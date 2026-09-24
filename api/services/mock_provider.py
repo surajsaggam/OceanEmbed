@@ -33,6 +33,12 @@ from api.schemas.transect import (
     TransectResponse,
     TransectStation,
 )
+from api.schemas.departure import (
+    DepartureRequest,
+    DepartureResponse,
+    DepthDepartureMetrics,
+    StationDepartureProfile,
+)
 from ml_interface.base_provider import AbstractOceanEmbedProvider
 
 
@@ -414,4 +420,93 @@ class MockInferenceProvider(AbstractOceanEmbedProvider):
             is_mock=True,
             data_source="Synthetic Climatology Baseline",
         )
+
+    def get_reconstruction_departure(
+        self, request: DepartureRequest
+    ) -> DepartureResponse:
+        """Synthetic Subsurface Reconstruction Departure calculation for UI development."""
+        depths = list(settings.STANDARD_DEPTHS)
+        req_depth = request.depth_m if request.depth_m in depths else 100
+
+        all_depth_metrics: List[DepthDepartureMetrics] = []
+        for d in depths:
+            # Thermocline (~100m) naturally has larger departures than surface or abyss
+            factor = 1.0 + 1.2 * math.exp(-0.5 * ((d - 100.0) / 60.0) ** 2)
+            rmse = round(0.45 * factor, 3)
+            mae = round(0.32 * factor, 3)
+            bias = round(0.05 * math.sin(d / 150.0), 3)
+            all_depth_metrics.append(
+                DepthDepartureMetrics(
+                    depth_m=d,
+                    rmse=rmse,
+                    mae=mae,
+                    mean_bias=bias,
+                    min_departure_c=round(-1.8 * factor, 3),
+                    max_departure_c=round(1.9 * factor, 3),
+                    valid_cells=14200,
+                )
+            )
+
+        sel_metric = next((m for m in all_depth_metrics if m.depth_m == req_depth), all_depth_metrics[7])
+
+        station_profile = None
+        if request.latitude is not None and request.longitude is not None:
+            recon = self.predict_profile(
+                ReconstructionRequest(
+                    date=request.date,
+                    latitude=request.latitude,
+                    longitude=request.longitude,
+                )
+            )
+            recon_t = recon.temperature_c
+            # Add synthetic baseline departures
+            dep_t = [
+                round(0.4 * math.sin(d / 80.0) * math.cos(request.latitude / 10.0), 3)
+                for d in depths
+            ]
+            ref_t = [round(r - dep, 3) for r, dep in zip(recon_t, dep_t)]
+            mean_abs_dep = round(float(np.mean(np.abs(dep_t))), 3)
+
+            station_profile = StationDepartureProfile(
+                latitude=round(request.latitude, 3),
+                longitude=round(request.longitude, 3),
+                depths_m=depths,
+                reconstructed_c=recon_t,
+                reference_c=ref_t,
+                departure_c=dep_t,
+                mean_absolute_departure_c=mean_abs_dep,
+            )
+
+        # Generate downsampled grid: 26 lats, 31 lons (step 4)
+        lats = [round(5.0 + i * 1.0, 2) for i in range(26)]
+        lons = [round(45.0 + j * 2.0, 2) for j in range(31)]
+        grid_dep: List[List[Optional[float]]] = []
+
+        for lat in lats:
+            row: List[Optional[float]] = []
+            for lon in lons:
+                # Mask out Indian subcontinent
+                if 72.0 <= lon <= 85.0 and 8.0 <= lat <= 24.0:
+                    row.append(None)
+                else:
+                    val = 0.5 * math.sin(lat / 5.0) * math.cos(lon / 8.0)
+                    row.append(round(val, 3))
+            grid_dep.append(row)
+
+        return DepartureResponse(
+            date=request.date,
+            selected_depth_m=req_depth,
+            depths_m=depths,
+            reference_name="GLORYS12V1 Reanalysis Reference (Synthetic Mock Mode)",
+            result_label="OceanIQ Reconstruction Departure",
+            scientific_note="Departure = OceanIQ reconstruction − GLORYS12V1 reference (Demonstration Mock Mode)",
+            depth_metrics=sel_metric,
+            all_depth_metrics=all_depth_metrics,
+            station_profile=station_profile,
+            grid_lat=lats,
+            grid_lon=lons,
+            grid_departure=grid_dep,
+            is_mock=True,
+        )
+
 

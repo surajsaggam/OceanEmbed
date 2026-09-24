@@ -11,6 +11,8 @@ import type {
   ReconstructionHistoryItem,
   TransectRequest,
   TransectResponse,
+  DepartureRequest,
+  DepartureResponse,
 } from '../types/api';
 
 
@@ -141,5 +143,20 @@ export async function fetchTransect(
   });
   return handleResponse<TransectResponse>(response);
 }
+
+export async function fetchDeparture(
+  request: DepartureRequest
+): Promise<DepartureResponse> {
+  const response = await fetch(`${API_BASE_URL}/departure`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(request),
+  });
+  return handleResponse<DepartureResponse>(response);
+}
+
 
 

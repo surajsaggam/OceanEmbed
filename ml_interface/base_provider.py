@@ -11,6 +11,7 @@ from api.schemas.reconstruction import ReconstructionRequest, ReconstructionResp
 from api.schemas.embedding import EmbeddingScatterResponse
 from api.schemas.argo import ArgoObservation
 from api.schemas.transect import TransectRequest, TransectResponse
+from api.schemas.departure import DepartureRequest, DepartureResponse
 
 
 class AbstractOceanEmbedProvider(ABC):
@@ -78,4 +79,17 @@ class AbstractOceanEmbedProvider(ABC):
             TransectResponse containing discrete stations with 15 standard depth temperatures.
         """
         pass
+
+    @abstractmethod
+    def get_reconstruction_departure(self, request: DepartureRequest) -> DepartureResponse:
+        """Calculate and return reconstruction departure relative to GLORYS12V1 reanalysis reference.
+        
+        Args:
+            request: DepartureRequest containing date, depth level, and optional coordinates.
+            
+        Returns:
+            DepartureResponse containing depth statistics and 2D spatial departure field.
+        """
+        pass
+
 

@@ -17,6 +17,7 @@ import { SurfaceDriversPanel } from '../surface/SurfaceDriversPanel';
 import { LatentManifoldView } from '../manifold/LatentManifoldView';
 import { ArgoValidationPanel } from '../validation/ArgoValidationPanel';
 import { ScientificProvenanceCard } from '../audit/ScientificProvenanceCard';
+import { ReconstructionDeparturePanel } from '../departure/ReconstructionDeparturePanel';
 import { fetchTransect } from '@/services/api';
 import type {
   ReconstructionResponse,
@@ -33,6 +34,7 @@ interface AnalysisWorkbenchProps {
   reconstruction: ReconstructionResponse | null;
   scatterData: EmbeddingScatterResponse | null;
   onSelectCoordinates: (lat: number, lon: number) => void;
+  onSelectDate?: (date: string) => void;
 }
 
 type SoundingViewMode = 'chart' | 'split' | 'table' | 'transect';
@@ -45,6 +47,7 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
   reconstruction,
   scatterData,
   onSelectCoordinates,
+  onSelectDate,
 }) => {
   const [viewMode, setViewMode] = useState<SoundingViewMode>('split');
   const [diagnosticTab, setDiagnosticTab] = useState<string>('drivers');
@@ -500,13 +503,17 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
                 Diagnostic Analysis & Scientific Lineage
               </span>
               <span className="text-[13px] text-[#64748d] font-mono mt-0.5 block">
-                Multimodal observation inversion, latent representation, and independent ground truth
+                Surface observations → latent representation → subsurface reconstruction → validation
               </span>
             </div>
 
             <TabsList className="h-8.5 p-0.5 rounded-lg bg-[#f1f5f9] border border-[#e2e8f0]">
               <TabsTrigger value="drivers" className="text-xs px-3 rounded-md data-[state=active]:bg-white data-[state=active]:text-[#0d253d] data-[state=active]:shadow-xs">
                 Surface Observations (7)
+              </TabsTrigger>
+
+              <TabsTrigger value="departure" className="text-xs px-3 rounded-md data-[state=active]:bg-white data-[state=active]:text-[#0d253d] data-[state=active]:shadow-xs">
+                Reconstruction Departure
               </TabsTrigger>
 
               <TabsTrigger value="manifold" className="text-xs px-3 rounded-md data-[state=active]:bg-white data-[state=active]:text-[#0d253d] data-[state=active]:shadow-xs">
@@ -527,6 +534,16 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
             <SurfaceDriversPanel
               surface={reconstruction?.surface_context ?? null}
               isMock={reconstruction?.is_mock ?? true}
+            />
+          </TabsContent>
+
+          <TabsContent value="departure" className="pt-4 m-0">
+            <ReconstructionDeparturePanel
+              date={effectiveDate}
+              latitude={latitude}
+              longitude={longitude}
+              isMock={reconstruction?.is_mock ?? false}
+              onSelectDate={onSelectDate}
             />
           </TabsContent>
 

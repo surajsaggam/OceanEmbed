@@ -149,4 +149,48 @@ export interface TransectResponse {
   data_source: string;
 }
 
+export interface DepthDepartureMetrics {
+  depth_m: number;
+  rmse: number;
+  mae: number;
+  mean_bias: number;
+  min_departure_c: number;
+  max_departure_c: number;
+  valid_cells: number;
+}
+
+export interface StationDepartureProfile {
+  latitude: number;
+  longitude: number;
+  depths_m: number[];
+  reconstructed_c: number[];
+  reference_c: number[];
+  departure_c: number[];
+  mean_absolute_departure_c: number;
+}
+
+export interface DepartureRequest {
+  date: string;
+  depth_m: number;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface DepartureResponse {
+  date: string;
+  selected_depth_m: number;
+  depths_m: number[];
+  reference_name: string;
+  result_label: string;
+  scientific_note: string;
+  depth_metrics: DepthDepartureMetrics;
+  all_depth_metrics: DepthDepartureMetrics[];
+  station_profile?: StationDepartureProfile | null;
+  grid_lat: number[];
+  grid_lon: number[];
+  grid_departure: (number | null)[][];
+  is_mock: boolean;
+}
+
+
 

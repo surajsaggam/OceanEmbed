@@ -36,6 +36,12 @@ from api.schemas.transect import (
     TransectResponse,
     TransectStation,
 )
+from api.schemas.departure import (
+    DepartureRequest,
+    DepartureResponse,
+    DepthDepartureMetrics,
+    StationDepartureProfile,
+)
 from inference.predictor import (
     CLIMATOLOGICAL_FILL_VALUES,
     FROZEN_PHASE1_SHA256,
@@ -504,4 +510,145 @@ class RealOceanEmbedProvider(AbstractOceanEmbedProvider):
             is_mock=False,
             data_source="OceanIQ observation archive",
         )
+
+    def get_reconstruction_departure(self, request: DepartureRequest) -> DepartureResponse:
+        """Calculates model reconstruction departure relative to GLORYS12V1 reanalysis reference."""
+        if not self.is_model_loaded:
+            raise RuntimeError(
+                f"Real OceanEmbed model checkpoint not loaded at '{self._checkpoint_path}'."
+            )
+
+        clean_date = request.date.strip()[:10]
+        npz_path = self._project_root / "data" / "processed" / "test" / f"oceanembed_{clean_date}.npz"
+        if not npz_path.exists():
+            npz_path = self._project_root / "data" / "processed" / f"oceanembed_{clean_date}.npz"
+
+        if not npz_path.exists():
+            raise ValueError(
+                f"Subsurface reference field is not available locally for date '{clean_date}'. "
+                f"Available reference date: '2019-01-01'. "
+                f"In accordance with scientific integrity guidelines, reference data is never fabricated."
+            )
+
+        npz_data = np.load(npz_path)
+        if "target" not in npz_data or "target_mask" not in npz_data:
+            raise ValueError(
+                f"Reference dataset at {npz_path.name} lacks 'target' or 'target_mask' fields."
+            )
+
+        target_3d = npz_data["target"]          # [15, 101, 241] in °C
+        target_mask = npz_data["target_mask"]    # [15, 101, 241] (1.0 = ocean)
+        input_14 = npz_data["input"]
+
+        # Run or load cached 3D prediction
+        if not hasattr(self, "_cached_pred") or self._cached_pred.get("date") != clean_date:
+            assert self._predictor is not None
+            pred_result = self._predictor.predict(
+                surface_observations=input_14,
+                date=clean_date,
+                return_embedding=False,
+                return_attention=False,
+            )
+            self._cached_pred = {"date": clean_date, "result": pred_result}
+        else:
+            pred_result = self._cached_pred["result"]
+
+        temp_3d = pred_result["temperature"]      # [15, 101, 241] in °C
+        ocean_mask = pred_result["ocean_mask"]    # [101, 241]
+        depths = list(self._predictor.standard_depths)
+
+        # Match closest requested depth
+        depth_idx = min(range(len(depths)), key=lambda i: abs(depths[i] - request.depth_m))
+        selected_depth = depths[depth_idx]
+
+        # Compute aggregate metrics for all 15 depths
+        all_metrics: List[DepthDepartureMetrics] = []
+        for d_i, d_val in enumerate(depths):
+            v_mask = (target_mask[d_i] == 1.0) & ocean_mask
+            if np.any(v_mask):
+                diff = temp_3d[d_i, v_mask] - target_3d[d_i, v_mask]
+                rmse = float(np.sqrt(np.mean(diff ** 2)))
+                mae = float(np.mean(np.abs(diff)))
+                bias = float(np.mean(diff))
+                min_val = float(np.min(diff))
+                max_val = float(np.max(diff))
+                cnt = int(np.sum(v_mask))
+            else:
+                rmse, mae, bias, min_val, max_val, cnt = 0.0, 0.0, 0.0, 0.0, 0.0, 0
+
+            all_metrics.append(
+                DepthDepartureMetrics(
+                    depth_m=d_val,
+                    rmse=round(rmse, 3),
+                    mae=round(mae, 3),
+                    mean_bias=round(bias, 3),
+                    min_departure_c=round(min_val, 2),
+                    max_departure_c=round(max_val, 2),
+                    valid_cells=cnt,
+                )
+            )
+
+        selected_metrics = all_metrics[depth_idx]
+
+        # Single station sounding profile (if coordinates provided)
+        station_profile: Optional[StationDepartureProfile] = None
+        if request.latitude is not None and request.longitude is not None:
+            H, W = 101, 241
+            lat_idx = int(np.clip(round((request.latitude - settings.LAT_MIN) / 0.25), 0, H - 1))
+            lon_idx = int(np.clip(round((request.longitude - settings.LON_MIN) / 0.25), 0, W - 1))
+
+            recon_vals = [round(float(t), 2) for t in temp_3d[:, lat_idx, lon_idx]]
+            ref_vals = [round(float(t), 2) for t in target_3d[:, lat_idx, lon_idx]]
+            dep_vals = [round(r - f, 2) for r, f in zip(recon_vals, ref_vals)]
+            mean_abs = round(float(np.mean([abs(d) for d in dep_vals])), 2)
+
+            station_profile = StationDepartureProfile(
+                latitude=round(request.latitude, 3),
+                longitude=round(request.longitude, 3),
+                depths_m=depths,
+                reconstructed_c=recon_vals,
+                reference_c=ref_vals,
+                departure_c=dep_vals,
+                mean_absolute_departure_c=mean_abs,
+            )
+
+        # Downsample 2D departure field by factor 2 for responsive web rendering (51 x 121 cells)
+        step = 2
+        sub_lats = self._predictor.lat_coords[::step]
+        sub_lons = self._predictor.lon_coords[::step]
+        sub_pred = temp_3d[depth_idx, ::step, ::step]
+        sub_ref = target_3d[depth_idx, ::step, ::step]
+        sub_mask = (target_mask[depth_idx, ::step, ::step] == 1.0) & ocean_mask[::step, ::step]
+
+        grid_departure: List[List[Optional[float]]] = []
+        for r_i in range(len(sub_lats)):
+            row: List[Optional[float]] = []
+            for c_i in range(len(sub_lons)):
+                if sub_mask[r_i, c_i]:
+                    val = float(sub_pred[r_i, c_i] - sub_ref[r_i, c_i])
+                    row.append(round(val, 2))
+                else:
+                    row.append(None)
+            grid_departure.append(row)
+
+        return DepartureResponse(
+            date=clean_date,
+            selected_depth_m=selected_depth,
+            depths_m=depths,
+            reference_name="GLORYS12V1 Reanalysis Reference",
+            result_label="OceanIQ Reconstruction Departure",
+            scientific_note=(
+                "Departure = OceanIQ reconstruction − GLORYS12V1 reference. "
+                "Evaluated on the held-out 2019-01-01 observation date. "
+                "This represents a model reconstruction departure from reanalysis, NOT a climatological anomaly."
+            ),
+            depth_metrics=selected_metrics,
+            all_depth_metrics=all_metrics,
+            station_profile=station_profile,
+            grid_lat=[round(float(l), 2) for l in sub_lats],
+            grid_lon=[round(float(l), 2) for l in sub_lons],
+            grid_departure=grid_departure,
+            is_mock=False,
+        )
+
 
