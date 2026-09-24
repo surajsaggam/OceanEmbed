@@ -142,6 +142,7 @@ export function App() {
 
       {/* Main Analysis Workbench (Map, Profile, Diagnostics — scrolls with page) */}
       <AnalysisWorkbench
+        date={date}
         latitude={latitude}
         longitude={longitude}
         loading={loading}

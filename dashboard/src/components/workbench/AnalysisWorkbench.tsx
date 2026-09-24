@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Maximize2 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
@@ -12,16 +12,21 @@ import { Button } from '@/components/ui/button';
 import { BasinLocationPicker } from '../map/BasinLocationPicker';
 import { ThermalSoundingPlot } from '../profile/ThermalSoundingPlot';
 import { ThermalMetricsMatrix } from '../profile/ThermalMetricsMatrix';
+import { VerticalTransectPlot } from '../profile/VerticalTransectPlot';
 import { SurfaceDriversPanel } from '../surface/SurfaceDriversPanel';
 import { LatentManifoldView } from '../manifold/LatentManifoldView';
 import { ArgoValidationPanel } from '../validation/ArgoValidationPanel';
 import { ScientificProvenanceCard } from '../audit/ScientificProvenanceCard';
+import { fetchTransect } from '@/services/api';
 import type {
   ReconstructionResponse,
   EmbeddingScatterResponse,
+  TransectResponse,
+  TransectPoint,
 } from '@/types/api';
 
 interface AnalysisWorkbenchProps {
+  date?: string;
   latitude: number;
   longitude: number;
   loading: boolean;
@@ -30,9 +35,10 @@ interface AnalysisWorkbenchProps {
   onSelectCoordinates: (lat: number, lon: number) => void;
 }
 
-type SoundingViewMode = 'chart' | 'split' | 'table';
+type SoundingViewMode = 'chart' | 'split' | 'table' | 'transect';
 
 export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
+  date,
   latitude,
   longitude,
   loading,
@@ -43,6 +49,76 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
   const [viewMode, setViewMode] = useState<SoundingViewMode>('split');
   const [diagnosticTab, setDiagnosticTab] = useState<string>('drivers');
   const [isProfileExpanded, setIsProfileExpanded] = useState<boolean>(false);
+
+  // Transect State
+  const [transectMode, setTransectMode] = useState<boolean>(false);
+  const [transectPoints, setTransectPoints] = useState<TransectPoint[]>([
+    { latitude: 15.0, longitude: 58.0 },
+    { latitude: 15.0, longitude: 73.0 },
+  ]);
+  const [transectData, setTransectData] = useState<TransectResponse | null>(null);
+  const [transectLoading, setTransectLoading] = useState<boolean>(false);
+
+  const effectiveDate = date || reconstruction?.date || '2019-01-01';
+
+  const loadTransect = useCallback(
+    async (pointsToFetch: TransectPoint[], fetchDate = effectiveDate) => {
+      if (pointsToFetch.length < 2) return;
+      setTransectLoading(true);
+      try {
+        const res = await fetchTransect({
+          date: fetchDate,
+          points: pointsToFetch,
+          num_samples: 30,
+        });
+        setTransectData(res);
+      } catch (err) {
+        console.error('Failed to load vertical transect:', err);
+      } finally {
+        setTransectLoading(false);
+      }
+    },
+    [effectiveDate]
+  );
+
+  // Pre-load initial transect on mount or date change
+  useEffect(() => {
+    if (transectPoints.length >= 2) {
+      loadTransect(transectPoints, effectiveDate);
+    }
+  }, [effectiveDate]);
+
+  const handleAddTransectPoint = (lat: number, lon: number) => {
+    if (transectPoints.length >= 2) {
+      // Start fresh transect
+      const newPts = [{ latitude: lat, longitude: lon }];
+      setTransectPoints(newPts);
+      setTransectData(null);
+    } else {
+      // Complete 2-point transect
+      const newPts = [...transectPoints, { latitude: lat, longitude: lon }];
+      setTransectPoints(newPts);
+      loadTransect(newPts);
+    }
+  };
+
+  const handleClearTransect = () => {
+    setTransectPoints([]);
+    setTransectData(null);
+  };
+
+  const handleSelectPresetTransect = (presetPoints: TransectPoint[]) => {
+    setTransectPoints(presetPoints);
+    loadTransect(presetPoints);
+  };
+
+  const handleToggleTransectMode = () => {
+    const nextMode = !transectMode;
+    setTransectMode(nextMode);
+    if (nextMode) {
+      setViewMode('transect');
+    }
+  };
 
   const argo = reconstruction?.argo_comparison;
 
@@ -63,7 +139,7 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
               North Indian Ocean Basin
             </span>
             <span className="text-[13px] font-mono text-[#64748d]">
-              Click basin to snap (0.25°)
+              {transectMode ? 'Click 2 points for Transect' : 'Click basin to snap (0.25°)'}
             </span>
           </div>
 
@@ -73,11 +149,16 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
               longitude={longitude}
               onSelectCoordinates={onSelectCoordinates}
               height="100%"
+              transectMode={transectMode || viewMode === 'transect'}
+              transectPoints={transectPoints}
+              onAddTransectPoint={handleAddTransectPoint}
+              onClearTransect={handleClearTransect}
+              onToggleTransectMode={handleToggleTransectMode}
             />
           </div>
         </div>
 
-        {/* Centerpiece Analytical Stage (Subsurface Temperature Profile) */}
+        {/* Centerpiece Analytical Stage (Subsurface Temperature Profile / Transect) */}
         <div
           className="lg:col-span-7 flex flex-col rounded-xl border border-[#e3e8ee] bg-white overflow-hidden shadow-xs"
           style={{ height: 'calc(100vh - 235px)', minHeight: '410px', maxHeight: '490px' }}
@@ -86,7 +167,9 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
           <div className="px-5 py-3 bg-white border-b border-[#e2e8f0] flex flex-wrap items-center justify-between gap-3 shrink-0">
             <div>
               <span className="text-[13px] font-semibold text-[#0d253d] uppercase tracking-wider block">
-                Subsurface Temperature Profile
+                {viewMode === 'transect'
+                  ? 'Vertical Subsurface Transect (Cross-Section)'
+                  : 'Subsurface Temperature Profile'}
               </span>
               <span className="text-[13px] font-mono text-[#64748d]">
                 15 Standard Levels (0–1000m)
@@ -94,7 +177,7 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
             </div>
 
             {/* Diagnostic Metrics Readout */}
-            {reconstruction && (
+            {reconstruction && viewMode !== 'transect' && (
               <div className="flex items-center gap-3 font-mono text-sm text-[#64748d]">
                 {reconstruction.d26_depth_m !== undefined && (
                   <span title="Depth of 26°C isotherm — Tropical Cyclone Heat Potential proxy">
@@ -116,14 +199,17 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
               </div>
             )}
 
-            {/* View Mode Segmented Controls (Apple-style pill tabs) + Expand Button */}
+            {/* View Mode Segmented Controls + Expand Button */}
             <div className="flex items-center gap-2">
               <div className="flex items-center p-0.5 rounded-full bg-[#f1f5f9] border border-[#e2e8f0] text-sm" role="tablist">
                 <button
                   type="button"
                   role="tab"
                   aria-selected={viewMode === 'chart'}
-                  onClick={() => setViewMode('chart')}
+                  onClick={() => {
+                    setViewMode('chart');
+                    setTransectMode(false);
+                  }}
                   className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
                     viewMode === 'chart'
                       ? 'bg-white text-[#0d253d] font-medium shadow-xs'
@@ -137,7 +223,10 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
                   type="button"
                   role="tab"
                   aria-selected={viewMode === 'split'}
-                  onClick={() => setViewMode('split')}
+                  onClick={() => {
+                    setViewMode('split');
+                    setTransectMode(false);
+                  }}
                   className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
                     viewMode === 'split'
                       ? 'bg-white text-[#0d253d] font-medium shadow-xs'
@@ -151,7 +240,10 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
                   type="button"
                   role="tab"
                   aria-selected={viewMode === 'table'}
-                  onClick={() => setViewMode('table')}
+                  onClick={() => {
+                    setViewMode('table');
+                    setTransectMode(false);
+                  }}
                   className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
                     viewMode === 'table'
                       ? 'bg-white text-[#0d253d] font-medium shadow-xs'
@@ -160,6 +252,26 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
                 >
                   Depth Matrix
                 </button>
+
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={viewMode === 'transect'}
+                  onClick={() => {
+                    setViewMode('transect');
+                    setTransectMode(true);
+                    if (!transectData && transectPoints.length >= 2) {
+                      loadTransect(transectPoints);
+                    }
+                  }}
+                  className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
+                    viewMode === 'transect'
+                      ? 'bg-white text-[#4338ca] font-semibold shadow-xs'
+                      : 'text-[#64748d] hover:text-[#0d253d]'
+                  }`}
+                >
+                  Vertical Transect
+                </button>
               </div>
 
               {/* Expand to Dialog Button */}
@@ -167,8 +279,8 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
                 type="button"
                 onClick={() => setIsProfileExpanded(true)}
                 className="p-1.5 rounded-md border border-[#e2e8f0] bg-white hover:bg-[#f8fafc] text-[#64748d] hover:text-[#0d253d] transition-colors cursor-pointer flex items-center justify-center shadow-xs"
-                title="Expand Subsurface Temperature Profile"
-                aria-label="Expand Subsurface Temperature Profile"
+                title="Expand View"
+                aria-label="Expand View"
               >
                 <Maximize2 className="size-4" />
               </button>
@@ -213,6 +325,17 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
                 />
               </div>
             )}
+
+            {viewMode === 'transect' && (
+              <div className="w-full h-full min-h-0 overflow-hidden flex flex-col">
+                <VerticalTransectPlot
+                  transect={transectData}
+                  loading={transectLoading}
+                  onSelectPreset={handleSelectPresetTransect}
+                  onClearTransect={handleClearTransect}
+                />
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -224,33 +347,14 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
             <div className="flex flex-wrap items-center justify-between gap-3 pr-8 pb-3 border-b border-[#e2e8f0]">
               <div>
                 <DialogTitle className="text-base font-semibold text-[#0d253d] uppercase tracking-wider block">
-                  Subsurface Temperature Profile
+                  {viewMode === 'transect'
+                    ? 'Vertical Subsurface Transect (Cross-Section)'
+                    : 'Subsurface Temperature Profile'}
                 </DialogTitle>
                 <DialogDescription className="text-[13px] font-mono text-[#64748d]">
                   15 Standard Levels (0–1000m) · Expanded Analytical View
                 </DialogDescription>
               </div>
-
-              {/* Diagnostic Metrics Readout */}
-              {reconstruction && (
-                <div className="flex items-center gap-3 font-mono text-sm text-[#64748d]">
-                  {reconstruction.d26_depth_m !== undefined && (
-                    <span title="Depth of 26°C isotherm">
-                      D26: <strong className="text-[#b45309] font-medium tabular-nums">{reconstruction.d26_depth_m && reconstruction.d26_depth_m > 0 ? `${reconstruction.d26_depth_m}m` : 'Not reached'}</strong>
-                    </span>
-                  )}
-                  {reconstruction.mixed_layer_depth_m !== null && reconstruction.mixed_layer_depth_m !== undefined && (
-                    <span title="Mixed Layer Depth threshold = 0.2°C">
-                      MLD: <strong className="text-[#0284c7] font-medium tabular-nums">{reconstruction.mixed_layer_depth_m}m</strong>
-                    </span>
-                  )}
-                  {argo && argo.rmse !== null && argo.rmse !== undefined && (
-                    <span title="RMSE vs collocated in-situ Argo float profile">
-                      Argo RMSE: <strong className="text-[#e11d48] font-medium tabular-nums">{argo.rmse.toFixed(2)}°C</strong>
-                    </span>
-                  )}
-                </div>
-              )}
 
               {/* View Mode Segmented Controls in Dialog */}
               <div className="flex items-center p-0.5 rounded-full bg-[#f1f5f9] border border-[#e2e8f0] text-sm" role="tablist">
@@ -295,6 +399,26 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
                 >
                   Depth Matrix
                 </button>
+
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={viewMode === 'transect'}
+                  onClick={() => {
+                    setViewMode('transect');
+                    setTransectMode(true);
+                    if (!transectData && transectPoints.length >= 2) {
+                      loadTransect(transectPoints);
+                    }
+                  }}
+                  className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
+                    viewMode === 'transect'
+                      ? 'bg-white text-[#4338ca] font-semibold shadow-xs'
+                      : 'text-[#64748d] hover:text-[#0d253d]'
+                  }`}
+                >
+                  Vertical Transect
+                </button>
               </div>
             </div>
           </DialogHeader>
@@ -334,6 +458,17 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
                 <ThermalMetricsMatrix
                   reconstruction={reconstruction}
                   maxHeight="100%"
+                />
+              </div>
+            )}
+
+            {viewMode === 'transect' && (
+              <div className="w-full h-full min-h-0 overflow-hidden flex flex-col">
+                <VerticalTransectPlot
+                  transect={transectData}
+                  loading={transectLoading}
+                  onSelectPreset={handleSelectPresetTransect}
+                  onClearTransect={handleClearTransect}
                 />
               </div>
             )}
@@ -415,4 +550,3 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
     </main>
   );
 };
-

@@ -13,6 +13,12 @@ from api.schemas.reconstruction import (
     ModelMetadata,
 )
 from api.schemas.history import ReconstructionHistoryItem
+from api.schemas.transect import (
+    TransectPoint,
+    TransectRequest,
+    TransectStation,
+    TransectResponse,
+)
 
 __all__ = [
     "SurfaceContext",
@@ -24,5 +30,9 @@ __all__ = [
     "ReconstructionResponse",
     "ModelMetadata",
     "ReconstructionHistoryItem",
+    "TransectPoint",
+    "TransectRequest",
+    "TransectStation",
+    "TransectResponse",
 ]
 

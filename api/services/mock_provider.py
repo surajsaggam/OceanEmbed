@@ -12,6 +12,8 @@ import time
 from datetime import datetime, date
 from typing import Optional, List, Dict, Any
 
+import numpy as np
+
 from api.config import settings
 from api.schemas.reconstruction import (
     ReconstructionRequest,
@@ -24,6 +26,12 @@ from api.schemas.embedding import (
     EmbeddingCoordinates,
     EmbeddingScatterPoint,
     EmbeddingScatterResponse,
+)
+from api.schemas.transect import (
+    TransectPoint,
+    TransectRequest,
+    TransectResponse,
+    TransectStation,
 )
 from ml_interface.base_provider import AbstractOceanEmbedProvider
 
@@ -331,3 +339,79 @@ class MockInferenceProvider(AbstractOceanEmbedProvider):
                 is_mock=True,
             )
         return None
+
+    def predict_transect(self, request: TransectRequest) -> TransectResponse:
+        """Generates synthetic temperature profile stations along a transect."""
+        waypoints = [(p.latitude, p.longitude) for p in request.points]
+
+        seg_lengths = []
+        total_dist = 0.0
+        for i in range(len(waypoints) - 1):
+            d = self._compute_haversine_distance(
+                waypoints[i][0], waypoints[i][1], waypoints[i + 1][0], waypoints[i + 1][1]
+            )
+            seg_lengths.append(d)
+            total_dist += d
+
+        target_samples = request.num_samples or max(15, min(60, int(total_dist / 25.0) + 1))
+        sample_dists = np.linspace(0.0, total_dist, target_samples).tolist() if total_dist > 0 else [0.0] * target_samples
+        cum_segs = [0.0] + list(np.cumsum(seg_lengths))
+
+        stations: List[TransectStation] = []
+        depths = list(settings.STANDARD_DEPTHS)
+
+        for idx, s_dist in enumerate(sample_dists):
+            seg_idx = 0
+            while seg_idx < len(seg_lengths) - 1 and s_dist > cum_segs[seg_idx + 1]:
+                seg_idx += 1
+
+            seg_len = seg_lengths[seg_idx]
+            frac = (s_dist - cum_segs[seg_idx]) / seg_len if seg_len > 0 else 0.0
+            frac = min(1.0, max(0.0, frac))
+
+            p_start = waypoints[seg_idx]
+            p_end = waypoints[seg_idx + 1]
+            s_lat = p_start[0] + frac * (p_end[0] - p_start[0])
+            s_lon = p_start[1] + frac * (p_end[1] - p_start[1])
+
+            # Determine whether point is valid ocean (simple NIO check)
+            is_ocean = not (72.5 <= s_lon <= 85.0 and 8.0 <= s_lat <= 22.0)  # Land mask for India
+
+            if is_ocean:
+                st_recon = self.predict_profile(
+                    ReconstructionRequest(date=request.date, latitude=s_lat, longitude=s_lon)
+                )
+                temps = st_recon.temperature_c
+                d26 = st_recon.d26_depth_m
+                mld = st_recon.mixed_layer_depth_m
+                sst = temps[0]
+            else:
+                temps = None
+                d26 = None
+                mld = None
+                sst = None
+
+            stations.append(
+                TransectStation(
+                    index=idx,
+                    latitude=round(s_lat, 3),
+                    longitude=round(s_lon, 3),
+                    distance_km=round(s_dist, 1),
+                    is_valid_ocean=is_ocean,
+                    temperature_c=temps,
+                    d26_depth_m=d26,
+                    mixed_layer_depth_m=mld,
+                    sst_c=sst,
+                )
+            )
+
+        return TransectResponse(
+            date=request.date,
+            depths_m=depths,
+            total_distance_km=round(total_dist, 1),
+            stations=stations,
+            model_name="OceanIQ Mock Transect Generator",
+            is_mock=True,
+            data_source="Synthetic Climatology Baseline",
+        )
+

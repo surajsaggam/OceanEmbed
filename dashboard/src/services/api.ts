@@ -9,6 +9,8 @@ import type {
   EmbeddingScatterResponse,
   ArgoObservation,
   ReconstructionHistoryItem,
+  TransectRequest,
+  TransectResponse,
 } from '../types/api';
 
 
@@ -125,4 +127,19 @@ export async function downloadReconstructionPdf(
   window.URL.revokeObjectURL(url);
   document.body.removeChild(a);
 }
+
+export async function fetchTransect(
+  request: TransectRequest
+): Promise<TransectResponse> {
+  const response = await fetch(`${API_BASE_URL}/transect`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(request),
+  });
+  return handleResponse<TransectResponse>(response);
+}
+
 

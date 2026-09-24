@@ -10,6 +10,7 @@ from typing import Optional
 from api.schemas.reconstruction import ReconstructionRequest, ReconstructionResponse
 from api.schemas.embedding import EmbeddingScatterResponse
 from api.schemas.argo import ArgoObservation
+from api.schemas.transect import TransectRequest, TransectResponse
 
 
 class AbstractOceanEmbedProvider(ABC):
@@ -65,3 +66,16 @@ class AbstractOceanEmbedProvider(ABC):
             ArgoObservation if a float is found within tolerance, otherwise None.
         """
         pass
+
+    @abstractmethod
+    def predict_transect(self, request: TransectRequest) -> TransectResponse:
+        """Reconstruct subsurface temperature along a geographic vertical transect.
+        
+        Args:
+            request: TransectRequest containing date, waypoint coordinates, and sample resolution.
+            
+        Returns:
+            TransectResponse containing discrete stations with 15 standard depth temperatures.
+        """
+        pass
+

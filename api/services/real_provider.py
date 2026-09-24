@@ -30,6 +30,12 @@ from api.schemas.reconstruction import (
     ReconstructionResponse,
 )
 from api.schemas.surface import SurfaceContext
+from api.schemas.transect import (
+    TransectPoint,
+    TransectRequest,
+    TransectResponse,
+    TransectStation,
+)
 from inference.predictor import (
     CLIMATOLOGICAL_FILL_VALUES,
     FROZEN_PHASE1_SHA256,
@@ -375,3 +381,127 @@ class RealOceanEmbedProvider(AbstractOceanEmbedProvider):
             )
         except Exception:
             return None
+
+    def predict_transect(self, request: TransectRequest) -> TransectResponse:
+        """Reconstructs subsurface temperature along a geographic vertical transect."""
+        if not self.is_model_loaded:
+            raise RuntimeError(
+                f"Real OceanEmbed model checkpoint not loaded at '{self._checkpoint_path}'. "
+                "Ensure checkpoints/phase1/best.pt and data/norm_stats/train_stats.json exist."
+            )
+
+        # 1. Load real preprocessed 14-channel observations
+        input_14 = self._load_preprocessed_observations(request.date)
+        if input_14 is None:
+            raise ValueError(
+                f"No preprocessed surface observations found for date '{request.date}'. "
+                f"Available preprocessed date in dataset: '2019-01-01'."
+            )
+
+        # 2. Check cached daily 3D grid or run deterministic inference
+        if not hasattr(self, "_cached_pred") or self._cached_pred.get("date") != request.date:
+            assert self._predictor is not None
+            pred_result = self._predictor.predict(
+                surface_observations=input_14,
+                date=request.date,
+                return_embedding=False,
+                return_attention=False,
+            )
+            self._cached_pred = {"date": request.date, "result": pred_result}
+        else:
+            pred_result = self._cached_pred["result"]
+
+        temp_3d = pred_result["temperature"]      # [15, 101, 241]
+        ocean_mask = pred_result["ocean_mask"]    # [101, 241]
+        depths = list(self._predictor.standard_depths)
+
+        # 3. Calculate waypoint distances via Haversine formula
+        waypoints = [(p.latitude, p.longitude) for p in request.points]
+
+        def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+            R = 6371.0
+            dlat = math.radians(lat2 - lat1)
+            dlon = math.radians(lon2 - lon1)
+            a = (
+                math.sin(dlat / 2.0) ** 2
+                + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2.0) ** 2
+            )
+            c = 2.0 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
+            return R * c
+
+        seg_lengths = []
+        total_dist = 0.0
+        for i in range(len(waypoints) - 1):
+            d = haversine_km(waypoints[i][0], waypoints[i][1], waypoints[i + 1][0], waypoints[i + 1][1])
+            seg_lengths.append(d)
+            total_dist += d
+
+        target_samples = request.num_samples or max(15, min(60, int(total_dist / 25.0) + 1))
+
+        if total_dist == 0.0:
+            sample_dists = [0.0] * target_samples
+        else:
+            sample_dists = np.linspace(0.0, total_dist, target_samples).tolist()
+
+        H, W = 101, 241
+        cum_segs = [0.0] + list(np.cumsum(seg_lengths))
+
+        stations: List[TransectStation] = []
+        for idx, s_dist in enumerate(sample_dists):
+            # Locate active segment
+            seg_idx = 0
+            while seg_idx < len(seg_lengths) - 1 and s_dist > cum_segs[seg_idx + 1]:
+                seg_idx += 1
+
+            seg_len = seg_lengths[seg_idx]
+            if seg_len > 0.0:
+                frac = (s_dist - cum_segs[seg_idx]) / seg_len
+            else:
+                frac = 0.0
+            frac = min(1.0, max(0.0, frac))
+
+            p_start = waypoints[seg_idx]
+            p_end = waypoints[seg_idx + 1]
+            s_lat = p_start[0] + frac * (p_end[0] - p_start[0])
+            s_lon = p_start[1] + frac * (p_end[1] - p_start[1])
+
+            lat_idx = int(np.clip(round((s_lat - settings.LAT_MIN) / 0.25), 0, H - 1))
+            lon_idx = int(np.clip(round((s_lon - settings.LON_MIN) / 0.25), 0, W - 1))
+
+            is_ocean = bool(ocean_mask[lat_idx, lon_idx])
+
+            if is_ocean:
+                station_temps = [float(round(t, 2)) for t in temp_3d[:, lat_idx, lon_idx]]
+                d26 = self._compute_d26(depths, station_temps)
+                mld = self._compute_mld(depths, station_temps)
+                sst = station_temps[0]
+            else:
+                station_temps = None
+                d26 = None
+                mld = None
+                sst = None
+
+            stations.append(
+                TransectStation(
+                    index=idx,
+                    latitude=round(s_lat, 3),
+                    longitude=round(s_lon, 3),
+                    distance_km=round(s_dist, 1),
+                    is_valid_ocean=is_ocean,
+                    temperature_c=station_temps,
+                    d26_depth_m=d26,
+                    mixed_layer_depth_m=mld,
+                    sst_c=sst,
+                )
+            )
+
+        return TransectResponse(
+            date=request.date,
+            depths_m=depths,
+            total_distance_km=round(total_dist, 1),
+            stations=stations,
+            model_name="OceanEmbed Phase-1 Primary Model",
+            is_mock=False,
+            data_source="OceanIQ observation archive",
+        )
+

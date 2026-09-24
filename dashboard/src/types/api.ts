@@ -116,3 +116,37 @@ export interface ReconstructionHistoryItem {
   timestamp: string;
 }
 
+export interface TransectPoint {
+  latitude: number;
+  longitude: number;
+}
+
+export interface TransectRequest {
+  date: string;
+  points: TransectPoint[];
+  num_samples?: number;
+}
+
+export interface TransectStation {
+  index: number;
+  latitude: number;
+  longitude: number;
+  distance_km: number;
+  is_valid_ocean: boolean;
+  temperature_c?: number[] | null;
+  d26_depth_m?: number | null;
+  mixed_layer_depth_m?: number | null;
+  sst_c?: number | null;
+}
+
+export interface TransectResponse {
+  date: string;
+  depths_m: number[];
+  total_distance_km: number;
+  stations: TransectStation[];
+  model_name: string;
+  is_mock: boolean;
+  data_source: string;
+}
+
+

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
-import { Crosshair, RotateCcw } from 'lucide-react';
+import { Crosshair, RotateCcw, Route, MapPin, X } from 'lucide-react';
 import { OCEAN_PRESETS } from '@/data/presets';
 import { NIO_DOMAIN, clampAndSnapCoordinates } from '@/lib/ocean';
 
@@ -9,6 +9,11 @@ interface BasinLocationPickerProps {
   longitude: number;
   onSelectCoordinates: (lat: number, lon: number) => void;
   height?: string;
+  transectMode?: boolean;
+  transectPoints?: Array<{ latitude: number; longitude: number }>;
+  onAddTransectPoint?: (lat: number, lon: number) => void;
+  onClearTransect?: () => void;
+  onToggleTransectMode?: () => void;
 }
 
 export const BasinLocationPicker: React.FC<BasinLocationPickerProps> = ({
@@ -16,16 +21,29 @@ export const BasinLocationPicker: React.FC<BasinLocationPickerProps> = ({
   longitude,
   onSelectCoordinates,
   height = '380px',
+  transectMode = false,
+  transectPoints = [],
+  onAddTransectPoint,
+  onClearTransect,
+  onToggleTransectMode,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.CircleMarker | null>(null);
   const pulseMarkerRef = useRef<L.CircleMarker | null>(null);
+
+  // Transect layer group
+  const transectLayerRef = useRef<L.LayerGroup | null>(null);
+
   const onSelectRef = useRef(onSelectCoordinates);
+  const onAddTransectPointRef = useRef(onAddTransectPoint);
+  const transectModeRef = useRef(transectMode);
   const initialCoordsRef = useRef({ latitude, longitude });
 
   useEffect(() => {
     onSelectRef.current = onSelectCoordinates;
+    onAddTransectPointRef.current = onAddTransectPoint;
+    transectModeRef.current = transectMode;
   });
 
   useEffect(() => {
@@ -86,7 +104,11 @@ export const BasinLocationPicker: React.FC<BasinLocationPickerProps> = ({
       );
 
       pMarker.on('click', () => {
-        onSelectRef.current(preset.latitude, preset.longitude);
+        if (transectModeRef.current && onAddTransectPointRef.current) {
+          onAddTransectPointRef.current(preset.latitude, preset.longitude);
+        } else {
+          onSelectRef.current(preset.latitude, preset.longitude);
+        }
       });
     });
 
@@ -117,13 +139,21 @@ export const BasinLocationPicker: React.FC<BasinLocationPickerProps> = ({
     ).addTo(map);
     markerRef.current = selMarker;
 
+    // Transect Layer Group
+    const transectGroup = L.layerGroup().addTo(map);
+    transectLayerRef.current = transectGroup;
+
     // Click on basin to clamp and snap to 0.25° grid
     map.on('click', (e: L.LeafletMouseEvent) => {
       const { latitude: snappedLat, longitude: snappedLon } = clampAndSnapCoordinates(
         e.latlng.lat,
         e.latlng.lng
       );
-      onSelectRef.current(snappedLat, snappedLon);
+      if (transectModeRef.current && onAddTransectPointRef.current) {
+        onAddTransectPointRef.current(snappedLat, snappedLon);
+      } else {
+        onSelectRef.current(snappedLat, snappedLon);
+      }
     });
 
     mapInstanceRef.current = map;
@@ -147,6 +177,51 @@ export const BasinLocationPicker: React.FC<BasinLocationPickerProps> = ({
     }
   }, [latitude, longitude]);
 
+  // Update Transect Line & Endpoint Markers on Map
+  useEffect(() => {
+    const group = transectLayerRef.current;
+    if (!group) return;
+
+    group.clearLayers();
+
+    if (transectPoints.length === 0) return;
+
+    // Draw waypoints
+    transectPoints.forEach((pt, idx) => {
+      const isStart = idx === 0;
+      const isEnd = idx === transectPoints.length - 1 && transectPoints.length > 1;
+      const markerColor = isStart ? '#059669' : isEnd ? '#4338ca' : '#f59e0b';
+      const label = isStart ? 'A (Start)' : isEnd ? 'B (End)' : `P${idx + 1}`;
+
+      const ptMarker = L.circleMarker([pt.latitude, pt.longitude], {
+        radius: 6.5,
+        color: '#ffffff',
+        fillColor: markerColor,
+        fillOpacity: 0.95,
+        weight: 2,
+      }).addTo(group);
+
+      ptMarker.bindTooltip(
+        `<div style="font-family: var(--font-sans, system-ui); font-size: 11px; padding: 2px;">
+           <b style="color: ${markerColor};">${label}</b><br/>
+           <span style="color: #64748d; font-family: var(--font-mono, monospace);">${pt.latitude.toFixed(2)}°N, ${pt.longitude.toFixed(2)}°E</span>
+         </div>`,
+        { permanent: true, direction: 'top', className: 'ocean-map-tooltip' }
+      );
+    });
+
+    // Draw connecting polyline
+    if (transectPoints.length >= 2) {
+      const latlngs: L.LatLngExpression[] = transectPoints.map((p) => [p.latitude, p.longitude]);
+      L.polyline(latlngs, {
+        color: '#4338ca',
+        weight: 3.0,
+        dashArray: '6, 6',
+        opacity: 0.85,
+      }).addTo(group);
+    }
+  }, [transectPoints]);
+
   const handleResetView = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (mapInstanceRef.current) {
@@ -161,12 +236,66 @@ export const BasinLocationPicker: React.FC<BasinLocationPickerProps> = ({
       role="region"
       aria-label="North Indian Ocean Basin Geographic Selector"
     >
-      {/* Selected Coordinates Overlay */}
-      <div className="absolute top-3 left-3 z-20 flex items-center gap-2 px-2.5 py-1 rounded-lg bg-white/95 backdrop-blur-md border border-[#e3e8ee] text-xs font-mono text-[#0d253d] pointer-events-none shadow-xs">
-        <Crosshair className="size-3 text-[#533afd]" />
-        <span className="tabular-nums font-medium">
-          {latitude.toFixed(2)}°N, {longitude.toFixed(2)}°E
-        </span>
+      {/* Top Left Controls: Coordinates / Transect Status */}
+      <div className="absolute top-3 left-3 z-20 flex items-center gap-2">
+        {!transectMode ? (
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-white/95 backdrop-blur-md border border-[#e3e8ee] text-xs font-mono text-[#0d253d] shadow-xs">
+            <Crosshair className="size-3 text-[#533afd]" />
+            <span className="tabular-nums font-medium">
+              {latitude.toFixed(2)}°N, {longitude.toFixed(2)}°E
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-[#4338ca] text-white text-xs font-mono shadow-xs">
+            <Route className="size-3 text-white" />
+            <span>
+              {transectPoints.length === 0
+                ? 'Click for Point A'
+                : transectPoints.length === 1
+                ? 'Click for Point B'
+                : `Transect Active (${transectPoints.length} pts)`}
+            </span>
+            {transectPoints.length > 0 && onClearTransect && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClearTransect();
+                }}
+                className="ml-1 p-0.5 rounded hover:bg-white/20 transition-colors"
+                title="Clear transect"
+              >
+                <X className="size-3" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Mode Toggle Button */}
+        {onToggleTransectMode && (
+          <button
+            type="button"
+            onClick={onToggleTransectMode}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border shadow-xs transition-all cursor-pointer ${
+              transectMode
+                ? 'bg-white text-[#4338ca] border-[#4338ca]'
+                : 'bg-white/95 text-[#64748d] hover:text-[#0d253d] border-[#e3e8ee]'
+            }`}
+            title={transectMode ? 'Switch to Point Station Mode' : 'Switch to Vertical Transect Mode'}
+          >
+            {transectMode ? (
+              <>
+                <MapPin className="size-3 text-[#4338ca]" />
+                <span>Station Mode</span>
+              </>
+            ) : (
+              <>
+                <Route className="size-3 text-[#4338ca]" />
+                <span>Transect Mode</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Reset Map View Button */}

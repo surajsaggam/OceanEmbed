@@ -6,6 +6,7 @@ from api.routes.embedding import router as embedding_router
 from api.routes.argo import router as argo_router
 from api.routes.history import router as history_router
 from api.routes.report import router as report_router
+from api.routes.transect import router as transect_router
 
 __all__ = [
     "health_router",
@@ -14,5 +15,7 @@ __all__ = [
     "argo_router",
     "history_router",
     "report_router",
+    "transect_router",
 ]
+
 
