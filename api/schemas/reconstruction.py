@@ -77,6 +77,10 @@ class ReconstructionResponse(BaseModel):
         None,
         description="Estimated Mixed Layer Depth in meters (temperature drop threshold)",
     )
+    tchp_kj_cm2: Optional[float] = Field(
+        None,
+        description="Tropical Cyclone Heat Potential in kJ/cm² integrated from surface to D26 isotherm (excess heat > 26°C)",
+    )
     argo_comparison: Optional[ArgoObservation] = Field(
         None,
         description="Collocated in-situ Argo float profile for independent blind validation",

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Maximize2 } from 'lucide-react';
+import { Maximize2, Info } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Dialog,
@@ -184,14 +184,24 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
             {reconstruction && viewMode !== 'transect' && (
               <div className="flex items-center gap-3 font-mono text-sm text-[#64748d]">
                 {reconstruction.d26_depth_m !== undefined && (
-                  <span title="Depth of 26°C isotherm — Tropical Cyclone Heat Potential proxy">
+                  <span title="Depth of 26°C isotherm — Upper-ocean thermal structure proxy">
                     D26: <strong className="text-[#b45309] font-medium tabular-nums">{reconstruction.d26_depth_m && reconstruction.d26_depth_m > 0 ? `${reconstruction.d26_depth_m}m` : 'Not reached'}</strong>
                   </span>
                 )}
 
                 {reconstruction.mixed_layer_depth_m !== null && reconstruction.mixed_layer_depth_m !== undefined && (
-                  <span title="Mixed Layer Depth threshold = 0.2°C">
+                  <span title="Mixed Layer Depth threshold = 0.5°C drop from surface">
                     MLD: <strong className="text-[#0284c7] font-medium tabular-nums">{reconstruction.mixed_layer_depth_m}m</strong>
+                  </span>
+                )}
+
+                {reconstruction.tchp_kj_cm2 !== null && reconstruction.tchp_kj_cm2 !== undefined && (
+                  <span
+                    className="inline-flex items-center gap-1 cursor-help border-b border-dotted border-[#059669]/40"
+                    title="Tropical Cyclone Heat Potential (TCHP) — Upper-ocean thermal energy integrated from surface to D26 isotherm: TCHP = ρ cp ∫₀ᴰ²⁶ [T(z) - 26°C] dz (ρ=1026 kg/m³, cp=3990 J/(kg·°C)). Oceanographic heat content indicator supporting cyclone/ocean thermal analysis; does not forecast cyclone tracks or rapid intensification."
+                  >
+                    TCHP: <strong className="text-[#059669] font-medium tabular-nums">{reconstruction.tchp_kj_cm2 > 0 ? `${reconstruction.tchp_kj_cm2} kJ/cm²` : '0.0 kJ/cm²'}</strong>
+                    <Info className="w-3 h-3 text-[#059669]/60 shrink-0" />
                   </span>
                 )}
 

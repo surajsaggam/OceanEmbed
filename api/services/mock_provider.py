@@ -231,6 +231,48 @@ class MockInferenceProvider(AbstractOceanEmbedProvider):
                 return round(z1 + fraction * (z2 - z1), 1)
         return float(depths[-1])
 
+    def _calculate_tchp(
+        self, depths: List[int], temps: List[float], d26: Optional[float]
+    ) -> Optional[float]:
+        """Calculate Tropical Cyclone Heat Potential (TCHP) in kJ/cm².
+
+        Formula:
+            TCHP = rho * cp * \\int_0^{D26} [T(z) - 26.0] dz
+        where:
+            rho = 1026.0 kg/m^3 (seawater density)
+            cp  = 3990.0 J/(kg*°C) (specific heat capacity of seawater)
+            Factor: rho * cp * 1e-7 = 0.409374 kJ/(cm^2 * m * °C)
+
+        Returns:
+            TCHP in kJ/cm² rounded to 1 decimal place.
+            Returns 0.0 if D26 is None or temperature never exceeds 26°C.
+        """
+        if d26 is None or d26 <= 0.0 or not temps or max(temps) < 26.0:
+            return 0.0
+
+        sub_z: List[float] = []
+        sub_t: List[float] = []
+        for z, t in zip(depths, temps):
+            if z < d26:
+                sub_z.append(float(z))
+                sub_t.append(float(t))
+            else:
+                break
+        sub_z.append(float(d26))
+        sub_t.append(26.0)
+
+        # Trapezoidal quadrature of thermal excess > 26°C
+        integral_m_c = 0.0
+        for i in range(len(sub_z) - 1):
+            dz = sub_z[i + 1] - sub_z[i]
+            excess1 = max(0.0, sub_t[i] - 26.0)
+            excess2 = max(0.0, sub_t[i + 1] - 26.0)
+            integral_m_c += 0.5 * (excess1 + excess2) * dz
+
+        factor = 1026.0 * 3990.0 * 1e-7
+        tchp = integral_m_c * factor
+        return round(float(tchp), 1)
+
     def predict_profile(self, request: ReconstructionRequest) -> ReconstructionResponse:
         start_time = time.perf_counter()
         req_date = date.fromisoformat(request.date)
@@ -247,6 +289,7 @@ class MockInferenceProvider(AbstractOceanEmbedProvider):
 
         d26 = self._calculate_d26(settings.STANDARD_DEPTHS, temps)
         mld = self._calculate_mld(settings.STANDARD_DEPTHS, temps)
+        tchp = self._calculate_tchp(settings.STANDARD_DEPTHS, temps, d26)
 
         # Check for nearby Argo float matchup
         argo_match = self.find_nearby_argo(
@@ -285,6 +328,7 @@ class MockInferenceProvider(AbstractOceanEmbedProvider):
             ),
             d26_depth_m=d26,
             mixed_layer_depth_m=mld,
+            tchp_kj_cm2=tchp,
             argo_comparison=argo_match,
             embedding=EmbeddingCoordinates(
                 pca_1=round(regime_info["pca_1"] + (request.longitude - 80) * 0.02, 2),

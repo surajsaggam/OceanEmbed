@@ -42,6 +42,7 @@ def test_predict_profile_structure(mock_provider):
     # Derived metrics
     assert resp.d26_depth_m is not None
     assert resp.mixed_layer_depth_m is not None
+    assert resp.tchp_kj_cm2 is not None
 
     # Provenance
     assert resp.is_mock is True

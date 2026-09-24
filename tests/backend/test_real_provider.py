@@ -34,6 +34,8 @@ def test_real_inference_execution(provider):
     assert isinstance(resp.embedding.pca_1, float)
     assert isinstance(resp.embedding.pca_2, float)
     assert resp.surface_context.sst_c > 0
+    assert resp.tchp_kj_cm2 is not None
+    assert resp.tchp_kj_cm2 > 0.0
 
 
 def test_unsupported_date_raises_error(provider):
@@ -46,7 +48,7 @@ def test_unsupported_date_raises_error(provider):
 
 
 def test_derived_oceanographic_indices(provider):
-    # Test D26 and MLD derivation
+    # Test D26, MLD, and TCHP derivation
     depths = [0, 5, 10, 20, 30, 50, 75, 100, 125, 150, 200, 300, 500, 700, 1000]
     temps = [29.0, 28.8, 28.5, 27.5, 26.5, 24.0, 21.0, 18.0, 15.0, 13.0, 11.0, 9.0, 7.5, 6.0, 5.0]
 
@@ -57,6 +59,16 @@ def test_derived_oceanographic_indices(provider):
     mld = provider._compute_mld(depths, temps, threshold=0.5)
     assert mld is not None
     assert 5.0 <= mld <= 20.0
+
+    # TCHP calculation on warm upper ocean
+    tchp = provider._compute_tchp(depths, temps, d26)
+    assert tchp is not None
+    assert tchp == pytest.approx(24.1, abs=0.2)
+
+    # Edge cases: cold profile never reaching 26°C or D26 is None
+    cold_temps = [24.0 - i * 0.02 for i in depths]
+    assert provider._compute_tchp(depths, cold_temps, None) == 0.0
+    assert provider._compute_tchp(depths, temps, 0.0) == 0.0
 
 
 def test_real_argo_lookup_behavior(provider):

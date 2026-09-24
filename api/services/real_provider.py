@@ -185,6 +185,49 @@ class RealOceanEmbedProvider(AbstractOceanEmbedProvider):
                 return round(z1 + frac * (z2 - z1), 1)
         return float(depths[-1])
 
+    def _compute_tchp(
+        self, depths: List[int], temps: List[float], d26: Optional[float]
+    ) -> Optional[float]:
+        """Calculates Tropical Cyclone Heat Potential (TCHP) in kJ/cm².
+
+        Formula:
+            TCHP = rho * cp * \\int_0^{D26} [T(z) - 26.0] dz
+        where:
+            rho = 1026.0 kg/m^3 (seawater density)
+            cp  = 3990.0 J/(kg*°C) (specific heat capacity of seawater)
+            Factor: rho * cp * 1e-7 = 0.409374 kJ/(cm^2 * m * °C)
+
+        Returns:
+            TCHP in kJ/cm² rounded to 1 decimal place.
+            Returns 0.0 if D26 is None or temperature never exceeds 26°C.
+        """
+        if d26 is None or d26 <= 0.0 or not temps or max(temps) < 26.0:
+            return 0.0
+
+        sub_z: List[float] = []
+        sub_t: List[float] = []
+        for z, t in zip(depths, temps):
+            if z < d26:
+                sub_z.append(float(z))
+                sub_t.append(float(t))
+            else:
+                break
+        sub_z.append(float(d26))
+        sub_t.append(26.0)
+
+        # Trapezoidal quadrature of thermal excess > 26°C
+        integral_m_c = 0.0
+        for i in range(len(sub_z) - 1):
+            dz = sub_z[i + 1] - sub_z[i]
+            excess1 = max(0.0, sub_t[i] - 26.0)
+            excess2 = max(0.0, sub_t[i + 1] - 26.0)
+            integral_m_c += 0.5 * (excess1 + excess2) * dz
+
+        # Physical constants: rho = 1026 kg/m^3, cp = 3990 J/(kg*C)
+        factor = 1026.0 * 3990.0 * 1e-7
+        tchp = integral_m_c * factor
+        return round(float(tchp), 1)
+
     def _project_embedding_2d(self, z: List[float], regime: str) -> Tuple[float, float]:
         """Projects 128-D embedding bottleneck to 2D coordinates for manifold visualization."""
         if not z or len(z) < 2:
@@ -242,6 +285,7 @@ class RealOceanEmbedProvider(AbstractOceanEmbedProvider):
         # 4. Derive physical indices
         d26 = self._compute_d26(depths, temps)
         mld = self._compute_mld(depths, temps)
+        tchp = self._compute_tchp(depths, temps, d26)
 
         # 5. Project 128-D embedding to 2D
         pca_1, pca_2 = self._project_embedding_2d(embedding_128, regime)
@@ -272,6 +316,7 @@ class RealOceanEmbedProvider(AbstractOceanEmbedProvider):
             surface_context=surface_ctx,
             d26_depth_m=d26,
             mixed_layer_depth_m=mld,
+            tchp_kj_cm2=tchp,
             argo_comparison=argo_comparison,
             embedding=EmbeddingCoordinates(
                 pca_1=pca_1,

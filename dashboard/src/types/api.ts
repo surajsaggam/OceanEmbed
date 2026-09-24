@@ -75,6 +75,7 @@ export interface ReconstructionResponse {
   surface_context: SurfaceContext;
   d26_depth_m?: number | null;
   mixed_layer_depth_m?: number | null;
+  tchp_kj_cm2?: number | null;
   argo_comparison?: ArgoObservation | null;
   embedding: EmbeddingCoordinates;
   model: ModelMetadata;

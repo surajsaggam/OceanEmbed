@@ -245,9 +245,24 @@ export const ThermalSoundingPlot: React.FC<ThermalSoundingPlotProps> = ({
                 </span>
               )}
               {reconstruction?.d26_depth_m !== undefined && (
-                <span className="flex items-center gap-1.5 text-[#b45309]">
+                <span className="flex items-center gap-1.5 text-[#b45309]" title="D26 Isotherm Depth">
                   <span className="w-2 h-2 rounded-full bg-[#d97706]/20 border border-[#d97706] inline-block" />
                   D26: {reconstruction.d26_depth_m && reconstruction.d26_depth_m > 0 ? `${reconstruction.d26_depth_m}m` : 'Not reached'}
+                </span>
+              )}
+              {reconstruction?.mixed_layer_depth_m !== null && reconstruction?.mixed_layer_depth_m !== undefined && (
+                <span className="flex items-center gap-1.5 text-[#0284c7]" title="Mixed Layer Depth (ΔT = 0.5°C)">
+                  <span className="w-2 h-2 rounded-full bg-[#0284c7]/20 border border-[#0284c7] inline-block" />
+                  MLD: {reconstruction.mixed_layer_depth_m}m
+                </span>
+              )}
+              {reconstruction?.tchp_kj_cm2 !== null && reconstruction?.tchp_kj_cm2 !== undefined && (
+                <span
+                  className="flex items-center gap-1.5 text-[#059669] cursor-help"
+                  title="Tropical Cyclone Heat Potential (TCHP) = ρ cp ∫₀ᴰ²⁶ [T(z) - 26°C] dz. Upper-ocean thermal energy integrated down to D26."
+                >
+                  <span className="w-2 h-2 rounded-full bg-[#059669]/20 border border-[#059669] inline-block" />
+                  TCHP: {reconstruction.tchp_kj_cm2 > 0 ? `${reconstruction.tchp_kj_cm2} kJ/cm²` : '0.0 kJ/cm²'}
                 </span>
               )}
             </div>
