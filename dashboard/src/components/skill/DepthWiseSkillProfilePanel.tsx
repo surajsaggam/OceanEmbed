@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Loader2, Info, Layers, TrendingDown, ArrowDownUp, AlertCircle } from 'lucide-react';
+import { Loader2, Info, Layers, TrendingDown, AlertCircle } from 'lucide-react';
 import { fetchDeparture } from '@/services/api';
 import type { DepthDepartureMetrics, DepartureResponse } from '@/types/api';
 
@@ -21,7 +21,7 @@ export const DepthWiseSkillProfilePanel: React.FC<DepthWiseSkillProfilePanelProp
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [selectedDepth, setSelectedDepth] = useState<number | null>(100);
   const [hoveredDepth, setHoveredDepth] = useState<number | null>(null);
-  const [orientation, setOrientation] = useState<'vertical' | 'horizontal'>('vertical');
+  const [hoverCoords, setHoverCoords] = useState<{ x: number; y: number } | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -70,7 +70,7 @@ export const DepthWiseSkillProfilePanel: React.FC<DepthWiseSkillProfilePanelProp
 
   const activeDepth = hoveredDepth ?? selectedDepth;
 
-  // Canvas drawing for the primary error curve
+  // Canvas drawing for the primary error curve (Oceanographic vertical sounding)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || metrics.length === 0) return;
@@ -78,310 +78,247 @@ export const DepthWiseSkillProfilePanel: React.FC<DepthWiseSkillProfilePanelProp
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const width = canvas.width;
-    const height = canvas.height;
+    // HiDPI / Retina Crisp Scaling
+    const dpr = window.devicePixelRatio || 1;
+    const displayWidth = 540;
+    const displayHeight = 350;
 
-    ctx.clearRect(0, 0, width, height);
+    canvas.width = displayWidth * dpr;
+    canvas.height = displayHeight * dpr;
 
-    // Background
+    ctx.save();
+    ctx.scale(dpr, dpr);
+
+    ctx.clearRect(0, 0, displayWidth, displayHeight);
+
+    // Clean background
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, width, height);
+    ctx.fillRect(0, 0, displayWidth, displayHeight);
 
-    const padLeft = 65;
-    const padRight = 35;
-    const padTop = 25;
-    const padBottom = 40;
+    const padLeft = 60;
+    const padRight = 32;
+    const padTop = 20;
+    const padBottom = 38;
 
-    const plotWidth = width - padLeft - padRight;
-    const plotHeight = height - padTop - padBottom;
+    const plotWidth = displayWidth - padLeft - padRight;
+    const plotHeight = displayHeight - padTop - padBottom;
 
     const maxError = 1.4; // Max error in °C on axis
 
-    if (orientation === 'vertical') {
-      // Oceanographic vertical sounding:
-      // Vertical axis = Depth (0m at top -> 1000m at bottom)
-      // Horizontal axis = Error in °C (0.0 -> maxError)
+    // Oceanographic vertical sounding:
+    // Vertical axis = Depth (0m at top -> 1000m at bottom)
+    // Horizontal axis = Error in °C (0.0 -> maxError)
+    const depthY = (d: number): number => {
+      const idx = STANDARD_DEPTHS.indexOf(d);
+      if (idx !== -1) {
+        return padTop + (idx / (STANDARD_DEPTHS.length - 1)) * plotHeight;
+      }
+      return padTop + (Math.log10(Math.max(1, d) + 1) / Math.log10(1001)) * plotHeight;
+    };
 
-      // Depth mapping using non-linear scale for standard oceanographic levels
-      const depthY = (d: number): number => {
-        const idx = STANDARD_DEPTHS.indexOf(d);
-        if (idx !== -1) {
-          return padTop + (idx / (STANDARD_DEPTHS.length - 1)) * plotHeight;
-        }
-        // Fallback logarithmic interpolation
-        return padTop + (Math.log10(Math.max(1, d) + 1) / Math.log10(1001)) * plotHeight;
-      };
+    const errorX = (err: number): number => {
+      return padLeft + (Math.max(0, err) / maxError) * plotWidth;
+    };
 
-      const errorX = (err: number): number => {
-        return padLeft + (Math.max(0, err) / maxError) * plotWidth;
-      };
+    // Subtle Thermocline wash (50m to 150m) - Restrained, clean, non-distracting
+    const tcTop = depthY(50);
+    const tcBottom = depthY(150);
+    ctx.fillStyle = 'rgba(241, 245, 249, 0.65)';
+    ctx.fillRect(padLeft, tcTop, plotWidth, tcBottom - tcTop);
 
-      // Thermocline highlight band (50m to 150m)
-      const tcTop = depthY(50);
-      const tcBottom = depthY(150);
-      ctx.fillStyle = 'rgba(254, 243, 199, 0.45)'; // Amber wash
-      ctx.fillRect(padLeft, tcTop, plotWidth, tcBottom - tcTop);
+    // Delicate dashed boundaries for thermocline
+    ctx.strokeStyle = 'rgba(203, 213, 225, 0.7)';
+    ctx.lineWidth = 0.75;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(padLeft, tcTop);
+    ctx.lineTo(padLeft + plotWidth, tcTop);
+    ctx.moveTo(padLeft, tcBottom);
+    ctx.lineTo(padLeft + plotWidth, tcBottom);
+    ctx.stroke();
+    ctx.setLineDash([]);
 
-      // Thermocline annotation
-      ctx.fillStyle = '#92400e';
-      ctx.font = '10px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
+    // Restrained thermocline annotation (positioned at top of zone to avoid crosshair collision)
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '9.5px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.fillText('Thermocline Layer (50–150m)', padLeft + plotWidth - 8, tcTop + 4);
+
+
+    // Simplified, light gridlines for standard depths
+    ctx.strokeStyle = 'rgba(226, 232, 240, 0.7)';
+    ctx.lineWidth = 0.75;
+    STANDARD_DEPTHS.forEach((d) => {
+      const y = depthY(d);
+      ctx.beginPath();
+      ctx.moveTo(padLeft, y);
+      ctx.lineTo(padLeft + plotWidth, y);
+      ctx.stroke();
+
+      // Axis ticks at left border
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.beginPath();
+      ctx.moveTo(padLeft - 3, y);
+      ctx.lineTo(padLeft, y);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(226, 232, 240, 0.7)';
+
+      // Depth labels on Y-axis
+      ctx.fillStyle = '#64748d';
+      ctx.font = '9.5px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
       ctx.textAlign = 'right';
-      ctx.fillText('Thermocline Peak Gradient', padLeft + plotWidth - 8, (tcTop + tcBottom) / 2);
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${d}m`, padLeft - 6, y);
+    });
 
-      // Horizontal grid lines for standard depths
-      STANDARD_DEPTHS.forEach((d) => {
-        const y = depthY(d);
-        ctx.strokeStyle = '#f1f5f9';
+    // Vertical grid lines for error intervals (0.2°C steps)
+    [0.0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4].forEach((e) => {
+      const x = errorX(e);
+      ctx.strokeStyle = 'rgba(226, 232, 240, 0.7)';
+      ctx.lineWidth = 0.75;
+      ctx.beginPath();
+      ctx.moveTo(x, padTop);
+      ctx.lineTo(x, padTop + plotHeight);
+      ctx.stroke();
+
+      // Axis tick at bottom border
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.beginPath();
+      ctx.moveTo(x, padTop + plotHeight);
+      ctx.lineTo(x, padTop + plotHeight + 3);
+      ctx.stroke();
+
+      ctx.fillStyle = '#64748d';
+      ctx.font = '9.5px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(`${e.toFixed(1)}°`, x, padTop + plotHeight + 6);
+    });
+
+    // Axes labels
+    ctx.fillStyle = '#334155';
+    ctx.font = '10.5px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Reconstruction Error (°C)', padLeft + plotWidth / 2, padTop + plotHeight + 23);
+
+    ctx.save();
+    ctx.translate(14, padTop + plotHeight / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Depth (m) ↓', 0, 0);
+    ctx.restore();
+
+    // Secondary curve: MAE (Thinner, dashed, muted slate-indigo `#6366f1`)
+    ctx.strokeStyle = '#6366f1';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    metrics.forEach((m, i) => {
+      const x = errorX(m.mae);
+      const y = depthY(m.depth_m);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Primary dominant curve: RMSE (Authoritative deep ocean navy `#0284c7`, solid)
+    ctx.strokeStyle = '#0284c7';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    metrics.forEach((m, i) => {
+      const x = errorX(m.rmse);
+      const y = depthY(m.depth_m);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // Data points & active selection
+    metrics.forEach((m) => {
+      const y = depthY(m.depth_m);
+      const xR = errorX(m.rmse);
+      const xM = errorX(m.mae);
+      const isHighlight = m.depth_m === activeDepth;
+
+      // MAE marker (small discrete square)
+      ctx.fillStyle = '#6366f1';
+      ctx.fillRect(
+        xM - (isHighlight ? 3.5 : 2.5),
+        y - (isHighlight ? 3.5 : 2.5),
+        isHighlight ? 7 : 5,
+        isHighlight ? 7 : 5
+      );
+
+      // RMSE marker (dominant circle)
+      ctx.fillStyle = isHighlight ? '#0369a1' : '#0284c7';
+      ctx.beginPath();
+      ctx.arc(xR, y, isHighlight ? 5.0 : 3.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (isHighlight) {
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Subtle crosshair guideline across hovered depth
+        ctx.strokeStyle = 'rgba(2, 132, 199, 0.35)';
         ctx.lineWidth = 1;
+        ctx.setLineDash([2, 2]);
         ctx.beginPath();
         ctx.moveTo(padLeft, y);
         ctx.lineTo(padLeft + plotWidth, y);
         ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    });
 
-        // Depth labels on Y-axis
-        ctx.fillStyle = '#64748d';
-        ctx.font = '10px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(`${d}m`, padLeft - 8, y);
-      });
-
-      // Vertical grid lines for error
-      [0.0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4].forEach((e) => {
-        const x = errorX(e);
-        ctx.strokeStyle = '#f1f5f9';
-        ctx.beginPath();
-        ctx.moveTo(x, padTop);
-        ctx.lineTo(x, padTop + plotHeight);
-        ctx.stroke();
-
-        ctx.fillStyle = '#64748d';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillText(`${e.toFixed(1)}°`, x, padTop + plotHeight + 6);
-      });
-
-      // Axes labels
-      ctx.fillStyle = '#0d253d';
-      ctx.font = '11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('Reconstruction Error (°C)', padLeft + plotWidth / 2, padTop + plotHeight + 24);
-
-      ctx.save();
-      ctx.translate(14, padTop + plotHeight / 2);
-      ctx.rotate(-Math.PI / 2);
-      ctx.fillText('Standard Depth Level (m) ↓', 0, 0);
-      ctx.restore();
-
-      // Draw MAE curve (Violet `#7c3aed`)
-      ctx.strokeStyle = '#7c3aed';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([4, 3]);
-      ctx.beginPath();
-      metrics.forEach((m, i) => {
-        const x = errorX(m.mae);
-        const y = depthY(m.depth_m);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // Draw RMSE curve (Ocean Blue `#0284c7`)
-      ctx.strokeStyle = '#0284c7';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      metrics.forEach((m, i) => {
-        const x = errorX(m.rmse);
-        const y = depthY(m.depth_m);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-      ctx.stroke();
-
-      // Draw point markers
-      metrics.forEach((m) => {
-        const y = depthY(m.depth_m);
-        const xR = errorX(m.rmse);
-        const xM = errorX(m.mae);
-        const isHighlight = m.depth_m === activeDepth;
-
-        // MAE marker (square)
-        ctx.fillStyle = '#7c3aed';
-        ctx.fillRect(xM - (isHighlight ? 4 : 3), y - (isHighlight ? 4 : 3), isHighlight ? 8 : 6, isHighlight ? 8 : 6);
-
-        // RMSE marker (circle)
-        ctx.fillStyle = isHighlight ? '#0369a1' : '#0284c7';
-        ctx.beginPath();
-        ctx.arc(xR, y, isHighlight ? 5.5 : 3.5, 0, Math.PI * 2);
-        ctx.fill();
-
-        if (isHighlight) {
-          ctx.strokeStyle = '#0d253d';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-
-          // Highlight guideline
-          ctx.strokeStyle = 'rgba(13, 37, 61, 0.4)';
-          ctx.setLineDash([2, 2]);
-          ctx.beginPath();
-          ctx.moveTo(padLeft, y);
-          ctx.lineTo(padLeft + plotWidth, y);
-          ctx.stroke();
-          ctx.setLineDash([]);
-        }
-      });
-    } else {
-      // Horizontal sequential orientation:
-      // X-axis = Depth (0 to 1000m)
-      // Y-axis = Error in °C (0.0 to 1.4°C)
-
-      const depthX = (d: number): number => {
-        const idx = STANDARD_DEPTHS.indexOf(d);
-        if (idx !== -1) {
-          return padLeft + (idx / (STANDARD_DEPTHS.length - 1)) * plotWidth;
-        }
-        return padLeft;
-      };
-
-      const errorY = (err: number): number => {
-        return padTop + (1.0 - Math.max(0, err) / maxError) * plotHeight;
-      };
-
-      // Thermocline band (50m to 150m)
-      const tcLeft = depthX(50);
-      const tcRight = depthX(150);
-      ctx.fillStyle = 'rgba(254, 243, 199, 0.45)';
-      ctx.fillRect(tcLeft, padTop, tcRight - tcLeft, plotHeight);
-
-      // Y-axis grid lines (Error)
-      [0.0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4].forEach((e) => {
-        const y = errorY(e);
-        ctx.strokeStyle = '#f1f5f9';
-        ctx.beginPath();
-        ctx.moveTo(padLeft, y);
-        ctx.lineTo(padLeft + plotWidth, y);
-        ctx.stroke();
-
-        ctx.fillStyle = '#64748d';
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(`${e.toFixed(1)}°C`, padLeft - 8, y);
-      });
-
-      // X-axis grid lines (Depth)
-      STANDARD_DEPTHS.forEach((d) => {
-        const x = depthX(d);
-        ctx.strokeStyle = '#f1f5f9';
-        ctx.beginPath();
-        ctx.moveTo(x, padTop);
-        ctx.lineTo(x, padTop + plotHeight);
-        ctx.stroke();
-
-        ctx.fillStyle = '#64748d';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillText(`${d}m`, x, padTop + plotHeight + 6);
-      });
-
-      // Axis labels
-      ctx.fillStyle = '#0d253d';
-      ctx.font = '11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('Standard Output Depths (m) →', padLeft + plotWidth / 2, padTop + plotHeight + 24);
-
-      // Draw MAE curve
-      ctx.strokeStyle = '#7c3aed';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([4, 3]);
-      ctx.beginPath();
-      metrics.forEach((m, i) => {
-        const x = depthX(m.depth_m);
-        const y = errorY(m.mae);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // Draw RMSE curve
-      ctx.strokeStyle = '#0284c7';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      metrics.forEach((m, i) => {
-        const x = depthX(m.depth_m);
-        const y = errorY(m.rmse);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-      ctx.stroke();
-
-      // Point markers
-      metrics.forEach((m) => {
-        const x = depthX(m.depth_m);
-        const yR = errorY(m.rmse);
-        const yM = errorY(m.mae);
-        const isHighlight = m.depth_m === activeDepth;
-
-        ctx.fillStyle = '#7c3aed';
-        ctx.fillRect(x - 3, yM - 3, 6, 6);
-
-        ctx.fillStyle = isHighlight ? '#0369a1' : '#0284c7';
-        ctx.beginPath();
-        ctx.arc(x, yR, isHighlight ? 5.5 : 3.5, 0, Math.PI * 2);
-        ctx.fill();
-
-        if (isHighlight) {
-          ctx.strokeStyle = '#0d253d';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-        }
-      });
-    }
-
-    // Outer border
+    // Outer framing border
     ctx.strokeStyle = '#cbd5e1';
     ctx.lineWidth = 1;
     ctx.strokeRect(padLeft, padTop, plotWidth, plotHeight);
-  }, [metrics, orientation, activeDepth]);
 
-  // Handle canvas mouse move
+    ctx.restore();
+  }, [metrics, activeDepth]);
+
+  // Handle canvas mouse move for interactive depth hovering
   const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas || metrics.length === 0) return;
 
     const rect = canvas.getBoundingClientRect();
-    const y = e.clientY - rect.top;
-    const x = e.clientX - rect.left;
+    const clientX = e.clientX - rect.left;
+    const clientY = e.clientY - rect.top;
 
-    const padLeft = 65;
-    const padRight = 35;
-    const padTop = 25;
-    const padBottom = 40;
+    const scaleY = 350 / (rect.height || 350);
+    const y = clientY * scaleY;
 
-    const plotWidth = canvas.width - padLeft - padRight;
-    const plotHeight = canvas.height - padTop - padBottom;
+    const padTop = 20;
+    const padBottom = 38;
+    const plotHeight = 350 - padTop - padBottom;
 
-    if (orientation === 'vertical') {
-      if (y >= padTop && y <= padTop + plotHeight) {
-        const frac = (y - padTop) / plotHeight;
-        const idx = Math.max(0, Math.min(STANDARD_DEPTHS.length - 1, Math.round(frac * (STANDARD_DEPTHS.length - 1))));
-        setHoveredDepth(STANDARD_DEPTHS[idx]);
-      } else {
-        setHoveredDepth(null);
-      }
+    if (y >= padTop && y <= padTop + plotHeight) {
+      const frac = (y - padTop) / plotHeight;
+      const idx = Math.max(
+        0,
+        Math.min(STANDARD_DEPTHS.length - 1, Math.round(frac * (STANDARD_DEPTHS.length - 1)))
+      );
+      setHoveredDepth(STANDARD_DEPTHS[idx]);
+      setHoverCoords({ x: clientX, y: clientY });
     } else {
-      if (x >= padLeft && x <= padLeft + plotWidth) {
-        const frac = (x - padLeft) / plotWidth;
-        const idx = Math.max(0, Math.min(STANDARD_DEPTHS.length - 1, Math.round(frac * (STANDARD_DEPTHS.length - 1))));
-        setHoveredDepth(STANDARD_DEPTHS[idx]);
-      } else {
-        setHoveredDepth(null);
-      }
+      setHoveredDepth(null);
+      setHoverCoords(null);
     }
   };
 
+
+  const handleCanvasMouseLeave = () => {
+    setHoveredDepth(null);
+    setHoverCoords(null);
+  };
+
   const activeMetric = metrics.find((m) => m.depth_m === activeDepth) || metrics[0];
+
 
   return (
     <div className="space-y-4">
@@ -504,34 +441,20 @@ export const DepthWiseSkillProfilePanel: React.FC<DepthWiseSkillProfilePanelProp
               </span>
             </div>
 
-            <div className="flex items-center gap-3">
-              {/* Orientation toggle */}
-              <button
-                type="button"
-                onClick={() => setOrientation((o) => (o === 'vertical' ? 'horizontal' : 'vertical'))}
-                className="text-[11px] font-mono text-[#64748d] hover:text-[#0d253d] flex items-center gap-1 px-2 py-0.5 rounded bg-[#f1f5f9] border border-[#e2e8f0] transition-colors cursor-pointer"
-                title="Toggle orientation"
-              >
-                <ArrowDownUp className="w-3 h-3" />
-                {orientation === 'vertical' ? 'Depth ↓' : 'Depth →'}
-              </button>
-
-              {/* Legend */}
-              <div className="flex items-center gap-3 text-[11px] font-mono">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-0.5 bg-[#0284c7] inline-block rounded-full" />
-                  <span className="text-[#0d253d] font-semibold">RMSE</span>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-0.5 border-t-2 border-dashed border-[#7c3aed] inline-block" />
-                  <span className="text-[#64748d]">MAE</span>
-                </span>
-              </div>
+            <div className="flex items-center gap-4 text-[11px] font-mono">
+              <span className="flex items-center gap-1.5">
+                <span className="w-3.5 h-0.5 bg-[#0284c7] inline-block rounded-full" />
+                <span className="text-[#0d253d] font-semibold">RMSE (Primary)</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-3.5 h-0.5 border-t-2 border-dashed border-[#6366f1] inline-block" />
+                <span className="text-[#64748d]">MAE (Secondary)</span>
+              </span>
             </div>
           </div>
 
           {/* Canvas Rendering Plot */}
-          <div className="relative mt-3 flex-1 min-h-[340px] flex items-center justify-center bg-[#fafafa] rounded-lg overflow-hidden border border-[#e2e8f0]">
+          <div className="relative mt-3 flex-1 min-h-[340px] flex items-center justify-center bg-white rounded-lg overflow-hidden border border-[#e2e8f0]">
             {loading && (
               <div className="absolute inset-0 z-10 bg-white/75 flex items-center justify-center gap-2">
                 <Loader2 className="w-5 h-5 animate-spin text-[#0284c7]" />
@@ -545,14 +468,54 @@ export const DepthWiseSkillProfilePanel: React.FC<DepthWiseSkillProfilePanelProp
                 {errorMsg}
               </div>
             ) : (
-              <canvas
-                ref={canvasRef}
-                width={540}
-                height={350}
-                onMouseMove={handleCanvasMouseMove}
-                onMouseLeave={() => setHoveredDepth(null)}
-                className="w-full h-auto max-h-[370px] cursor-crosshair block"
-              />
+              <>
+                <canvas
+                  ref={canvasRef}
+                  width={540}
+                  height={350}
+                  onMouseMove={handleCanvasMouseMove}
+                  onMouseLeave={handleCanvasMouseLeave}
+                  className="w-full h-auto max-h-[370px] cursor-crosshair block"
+                />
+
+                {/* Exact Metric Hover Tooltip */}
+                {hoveredDepth !== null && hoverCoords && activeMetric && (
+                  <div
+                    className="absolute z-20 pointer-events-none bg-[#0d253d]/95 text-white px-2.5 py-1.5 rounded-md text-[11px] font-mono shadow-md border border-[#334155]/60 transition-all duration-75"
+                    style={{
+                      left: Math.min(hoverCoords.x + 14, 340),
+                      top: Math.max(hoverCoords.y - 45, 12),
+                    }}
+                  >
+                    <div className="font-bold text-[#f8fafc] border-b border-[#334155] pb-0.5 mb-1">
+                      {hoveredDepth}m Level
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[#94a3b8]">RMSE:</span>
+                      <span className="text-[#38bdf8] font-bold">{activeMetric.rmse.toFixed(3)}°C</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[#94a3b8]">MAE:</span>
+                      <span className="text-[#c084fc] font-medium">{activeMetric.mae.toFixed(3)}°C</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[#94a3b8]">Mean Bias:</span>
+                      <span
+                        className={
+                          activeMetric.mean_bias > 0
+                            ? 'text-[#fca5a5] font-semibold'
+                            : activeMetric.mean_bias < 0
+                            ? 'text-[#93c5fd] font-semibold'
+                            : 'text-[#e2e8f0]'
+                        }
+                      >
+                        {activeMetric.mean_bias >= 0 ? '+' : ''}
+                        {activeMetric.mean_bias.toFixed(3)}°C
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
