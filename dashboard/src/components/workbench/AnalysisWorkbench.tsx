@@ -18,6 +18,7 @@ import { LatentManifoldView } from '../manifold/LatentManifoldView';
 import { ArgoValidationPanel } from '../validation/ArgoValidationPanel';
 import { ScientificProvenanceCard } from '../audit/ScientificProvenanceCard';
 import { ReconstructionDeparturePanel } from '../departure/ReconstructionDeparturePanel';
+import { DepthWiseSkillProfilePanel } from '../skill/DepthWiseSkillProfilePanel';
 import { fetchTransect } from '@/services/api';
 import type {
   ReconstructionResponse,
@@ -516,6 +517,10 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
                 Reconstruction Departure
               </TabsTrigger>
 
+              <TabsTrigger value="skill" className="text-xs px-3 rounded-md data-[state=active]:bg-white data-[state=active]:text-[#0d253d] data-[state=active]:shadow-xs">
+                Depth-wise Model Skill
+              </TabsTrigger>
+
               <TabsTrigger value="manifold" className="text-xs px-3 rounded-md data-[state=active]:bg-white data-[state=active]:text-[#0d253d] data-[state=active]:shadow-xs">
                 128-D Latent Manifold
               </TabsTrigger>
@@ -542,6 +547,14 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
               date={effectiveDate}
               latitude={latitude}
               longitude={longitude}
+              isMock={reconstruction?.is_mock ?? false}
+              onSelectDate={onSelectDate}
+            />
+          </TabsContent>
+
+          <TabsContent value="skill" className="pt-4 m-0">
+            <DepthWiseSkillProfilePanel
+              date={effectiveDate}
               isMock={reconstruction?.is_mock ?? false}
               onSelectDate={onSelectDate}
             />

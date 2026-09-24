@@ -13,6 +13,7 @@ import type {
   TransectResponse,
   DepartureRequest,
   DepartureResponse,
+  DepthDepartureMetrics,
 } from '../types/api';
 
 
@@ -157,6 +158,16 @@ export async function fetchDeparture(
   });
   return handleResponse<DepartureResponse>(response);
 }
+
+export async function fetchSkillProfile(
+  date: string = '2019-01-01'
+): Promise<DepthDepartureMetrics[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/departure/skill-profile?date=${encodeURIComponent(date)}`
+  );
+  return handleResponse<DepthDepartureMetrics[]>(response);
+}
+
 
 
 

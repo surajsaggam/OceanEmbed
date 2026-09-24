@@ -107,3 +107,18 @@ def test_departure_api_endpoint():
     assert data["depth_metrics"]["valid_cells"] > 0
     assert len(data["grid_lat"]) > 0
     assert len(data["grid_lon"]) > 0
+
+
+def test_departure_skill_profile_endpoint():
+    response = client.get("/api/departure/skill-profile?date=2019-01-01")
+    assert response.status_code == 200
+    metrics = response.json()
+    assert len(metrics) == 15
+    for item in metrics:
+        assert "depth_m" in item
+        assert "rmse" in item
+        assert "mae" in item
+        assert "mean_bias" in item
+        assert "valid_cells" in item
+        assert item["valid_cells"] > 0
+

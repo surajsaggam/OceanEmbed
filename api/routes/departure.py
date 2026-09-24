@@ -54,3 +54,35 @@ def get_reconstruction_departure(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Departure calculation error: {str(e)}",
         )
+
+
+@router.get(
+    "/departure/skill-profile",
+    response_model=list,
+    status_code=status.HTTP_200_OK,
+    summary="Get Depth-wise Model Skill Profile Metrics across all 15 Standard Depths",
+    description=(
+        "Returns RMSE, MAE, Mean Bias, and Valid Cell count across all 15 depths (0 to 1000m) "
+        "evaluated against GLORYS12V1 reanalysis reference for the held-out test date."
+    ),
+)
+def get_depth_wise_skill_profile(
+    date: str = "2019-01-01",
+    service: InferenceService = Depends(get_inference_service),
+):
+    try:
+        provider = service.get_provider()
+        res = provider.get_reconstruction_departure(DepartureRequest(date=date, depth_m=100))
+        return res.all_depth_metrics
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(ve),
+        )
+    except Exception as e:
+        logger.error(f"Skill profile calculation error: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Skill profile calculation error: {str(e)}",
+        )
+
