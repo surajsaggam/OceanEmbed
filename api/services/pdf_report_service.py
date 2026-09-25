@@ -210,77 +210,13 @@ def _generate_depth_matrix_chart(recon: ReconstructionResponse) -> io.BytesIO:
 
     depths = recon.depths_m
     temps = recon.temperature_c
-    d26 = recon.d26_depth_m
-    mld = recon.mixed_layer_depth_m
 
     cmap = plt.cm.turbo
     norm = plt.Normalize(vmin=5.0, vmax=30.0)
 
-    # Subplot 1: Continuous Water Column Depth Ribbon (Left, 0 to 1000 m)
-    ax1 = fig.add_axes([0.09, 0.16, 0.20, 0.74])
-    ax1.set_facecolor("#fafbfc")
-
-    y_cont = np.linspace(0, 1000, 300)
-    t_cont = np.interp(y_cont, depths, temps)
-    im_data = norm(t_cont).reshape(-1, 1)
-
-    im = ax1.imshow(
-        im_data,
-        extent=[0, 1, 1000, 0],
-        aspect="auto",
-        cmap=cmap,
-        norm=norm,
-        interpolation="bicubic",
-    )
-
-    for d in depths:
-        ax1.axhline(d, color="white", linewidth=0.5, alpha=0.5, linestyle=":")
-
-    if d26 is not None and d26 > 0 and max(temps) >= 26.0:
-        ax1.axhline(d26, color="#059669", linewidth=1.3, linestyle="--")
-        ax1.text(
-            0.95,
-            d26,
-            f" D26 {d26:.0f}m",
-            color="#059669",
-            fontsize=6.5,
-            fontweight="bold",
-            va="center",
-            ha="left",
-        )
-
-    if mld is not None and mld > 0:
-        ax1.axhline(mld, color="#0284c7", linewidth=1.3, linestyle=":")
-        ax1.text(
-            0.95,
-            mld,
-            f" MLD {mld:.0f}m",
-            color="#0284c7",
-            fontsize=6.5,
-            fontweight="bold",
-            va="center",
-            ha="left",
-        )
-
-    ax1.set_ylim(1000, 0)
-    ax1.set_xlim(0, 1)
-    ax1.set_xticks([])
-    ax1.set_yticks([0, 100, 200, 300, 500, 700, 1000])
-    ax1.set_yticklabels(
-        ["0m", "100m", "200m", "300m", "500m", "700m", "1000m"],
-        fontsize=6.8,
-        color="#334155",
-    )
-    ax1.set_ylabel("Water Column Depth", fontsize=7.5, fontweight="bold", color="#1e293b")
-    ax1.set_title("Continuous Sounding", fontsize=8.0, fontweight="bold", color="#0d253d", pad=5)
-
-    for spine in ax1.spines.values():
-        spine.set_color("#cbd5e1")
-        spine.set_linewidth(0.8)
-
-    # Subplot 2: 15 Standard Depths Discrete Thermal Matrix (Right)
-    ax2 = fig.add_axes([0.37, 0.22, 0.59, 0.68])
-    ax2.set_facecolor("#ffffff")
+    # 15 Standard Depths Discrete Thermal Matrix (Full Width)
+    ax = fig.add_axes([0.04, 0.20, 0.92, 0.70])
+    ax.set_facecolor("#ffffff")
 
     for idx, (d, t) in enumerate(zip(depths, temps)):
         y = 14 - idx  # Surface (0m) at top (y=14) down to 1000m at bottom (y=0)
@@ -293,16 +229,16 @@ def _generate_depth_matrix_chart(recon: ReconstructionResponse) -> io.BytesIO:
             edgecolor="#cbd5e1",
             linewidth=0.5,
         )
-        ax2.add_patch(rect)
+        ax.add_patch(rect)
 
         lum = 0.299 * bg_color[0] + 0.587 * bg_color[1] + 0.114 * bg_color[2]
         txt_color = "#000000" if lum > 0.55 else "#ffffff"
 
-        ax2.text(
+        ax.text(
             0.04,
             y,
             f"{d:4d} m",
-            fontsize=7.0,
+            fontsize=7.2,
             fontweight="bold",
             color=txt_color,
             va="center",
@@ -321,22 +257,22 @@ def _generate_depth_matrix_chart(recon: ReconstructionResponse) -> io.BytesIO:
             if d <= 700
             else "Deep NIO Abyss"
         )
-        ax2.text(
+        ax.text(
             0.50,
             y,
             layer,
-            fontsize=6.5,
+            fontsize=7.0,
             color=txt_color,
             va="center",
             ha="center",
             alpha=0.92,
         )
 
-        ax2.text(
+        ax.text(
             0.96,
             y,
             f"{t:5.2f} °C",
-            fontsize=7.0,
+            fontsize=7.2,
             fontweight="bold",
             color=txt_color,
             va="center",
@@ -344,23 +280,25 @@ def _generate_depth_matrix_chart(recon: ReconstructionResponse) -> io.BytesIO:
             family="monospace",
         )
 
-    ax2.set_xlim(-0.02, 1.02)
-    ax2.set_ylim(-0.6, 14.6)
-    ax2.axis("off")
-    ax2.set_title(
-        "15 Standard Depth Levels · Discrete Thermal Matrix",
-        fontsize=8.0,
+    ax.set_xlim(-0.02, 1.02)
+    ax.set_ylim(-0.6, 14.6)
+    ax.axis("off")
+    ax.set_title(
+        "15 Standard Depth Levels · Discrete Thermal Matrix (0 m – 1000 m)",
+        fontsize=8.5,
         fontweight="bold",
         color="#0d253d",
-        pad=5,
+        pad=6,
     )
 
     # Horizontal Colorbar at the bottom
-    cax = fig.add_axes([0.37, 0.09, 0.59, 0.05])
-    cb = fig.colorbar(im, cax=cax, orientation="horizontal")
+    cax = fig.add_axes([0.15, 0.08, 0.70, 0.05])
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    cb = fig.colorbar(sm, cax=cax, orientation="horizontal")
     cb.set_ticks([5, 10, 15, 20, 25, 30])
     cb.set_ticklabels(["5°C", "10°C", "15°C", "20°C", "25°C", "30°C"])
-    cb.ax.tick_params(labelsize=6.0, colors="#475569")
+    cb.ax.tick_params(labelsize=6.2, colors="#475569")
     cb.set_label(
         "Thermal Colormap (Turbo Scale · Reconstructed Temperature)",
         fontsize=6.5,
@@ -623,8 +561,9 @@ def _generate_embedding_manifold_chart(recon: ReconstructionResponse) -> io.Byte
         label=f"Query Reconstruction ({recon.latitude:.2f}°N, {recon.longitude:.2f}°E)",
     )
 
+    basin_label = f"Basin: {'Bay of Bengal' if recon.longitude >= 77.0 else 'Arabian Sea'}"
     ax.annotate(
-        f"Reconstruction [{pca_1:+.2f}, {pca_2:+.2f}]\nContext: {recon.embedding.regime_label}",
+        f"Reconstruction [{pca_1:+.2f}, {pca_2:+.2f}]\n{basin_label}",
         xy=(pca_1, pca_2),
         xytext=(pca_1 + 0.35, pca_2 + 0.35),
         arrowprops=dict(arrowstyle="->", color="#4338ca", lw=0.9),
@@ -812,6 +751,9 @@ def generate_reconstruction_pdf(
     )
     story.append(Spacer(1, 8))
 
+    basin_name = "Bay of Bengal" if recon.longitude >= 77.0 else "Arabian Sea"
+    basin_label = f"Basin: {basin_name}"
+
     # 1. Observation Target Specifications
     story.append(Paragraph("1. Observation Target Specifications", h1_style))
     obs_table_data = [
@@ -831,22 +773,14 @@ def generate_reconstruction_pdf(
             Paragraph("North Indian Ocean (5°N–30°N, 45°E–105°E)", table_cell),
         ],
         [
-            Paragraph("Oceanographic Regime", table_cell_bold),
-            Paragraph(f"<b>{recon.embedding.regime_label}</b>", table_cell),
-            Paragraph("Classified by spatial latent clustering", table_cell),
+            Paragraph("Geographic Basin", table_cell_bold),
+            Paragraph(f"<b>{basin_label}</b>", table_cell),
+            Paragraph("Regional basin within North Indian Ocean domain (5°N–30°N, 45°E–105°E)", table_cell),
         ],
         [
             Paragraph("Grid Resolution", table_cell_bold),
             Paragraph("0.25° × 0.25° (~27 km)", table_cell),
             Paragraph("Authoritative standard grid mapping (101 × 241)", table_cell),
-        ],
-        [
-            Paragraph("Spatial Domain Basin", table_cell_bold),
-            Paragraph(
-                "Bay of Bengal" if recon.longitude >= 77.0 else "Arabian Sea" if recon.latitude >= 10.0 else "Equatorial Indian Ocean",
-                table_cell,
-            ),
-            Paragraph("Northern Indian Ocean Tropical Regime", table_cell),
         ],
     ]
     obs_table = Table(obs_table_data, colWidths=[140, 174, 190])
@@ -923,15 +857,15 @@ def generate_reconstruction_pdf(
     tchp_sentence = (
         f"The OceanIQ-derived Tropical Cyclone Heat Potential (TCHP) is estimated at <b>{tchp_str}</b> "
         f"via trapezoidal integration of thermal excess above 26°C down to D26 "
-        f"(ρ cp ∫₀ᴰ²⁶ [T(z) - 26] dz, ρ=1026 kg/m³, cp=3990 J/(kg·°C)). "
+        f"(TCHP = ρ × cp × integral of [T(z) − 26°C] from 0 to D26, ρ=1026 kg/m³, cp=3990 J/(kg·°C)). "
         f"TCHP represents an upper-ocean heat-content indicator supporting cyclone/ocean thermal analysis; "
         f"it does not forecast cyclone tracks or rapid intensification. "
     )
 
     story.append(
         Paragraph(
-            f"<b>Scientific Summary:</b> At {recon.latitude:.2f}°N, {recon.longitude:.2f}°E within the "
-            f"<b>{recon.embedding.regime_label}</b>, the reconstructed thermal profile spans from "
+            f"<b>Scientific Summary:</b> At {recon.latitude:.2f}°N, {recon.longitude:.2f}°E within "
+            f"<b>{basin_label}</b>, the reconstructed thermal profile spans from "
             f"<b>{recon.temperature_c[0]:.2f}°C</b> at surface (0m) down to <b>{recon.temperature_c[-1]:.2f}°C</b> at the 1000m abyss. "
             f"{d26_sentence}"
             f"The mixed layer depth (MLD) is estimated at <b>{mld_str}</b>. "
@@ -1016,9 +950,8 @@ def generate_reconstruction_pdf(
     story.append(Paragraph("5. Subsurface Temperature Structure · 15 Standard Depths Matrix", h1_style))
     story.append(
         Paragraph(
-            "Depth-oriented visualization of the reconstructed vertical thermal structure. "
-            "Continuous sounding column (left) displays the vertical thermal gradient from surface skin (0 m) to 1000 m abyss, "
-            "while the discrete depth matrix (right) presents reconstructed temperatures across all 15 authoritative standard depth levels.",
+            "Depth-oriented visualization of the reconstructed vertical thermal structure across all 15 authoritative standard depth levels (0 m to 1000 m). "
+            "Discrete depth cells display reconstructed temperatures and oceanic depth-zone labels from the surface ocean skin to the 1000 m abyss.",
             muted_body,
         )
     )
@@ -1144,7 +1077,7 @@ def generate_reconstruction_pdf(
         Paragraph(
             "<b>Scientific Framing:</b> Reconstruction Departure = OceanIQ Reconstructed Temperature − GLORYS12V1 Reference. "
             "<b>GLORYS12V1 is a numerical ocean reanalysis reference dataset, NOT direct physical in-situ ground truth.</b> "
-            "This analysis quantifies model departure from the verified reanalysis reference field on the held-out test date.",
+            "This analysis quantifies model departure from the GLORYS12V1 reanalysis reference field on the held-out test date.",
             muted_body,
         )
     )
@@ -1218,10 +1151,10 @@ def generate_reconstruction_pdf(
     story.append(Paragraph("9. Depth-Wise Model Skill Profile", h1_style))
     story.append(
         Paragraph(
-            "<b>Evaluation Scope:</b> Basin-wide held-out evaluation across 14,200 grid cells over the North Indian Ocean domain on 2019-01-01. "
-            "Peak error occurs in the sharp thermocline zone (50–150m, RMSE ~1.15°C) where internal waves and baroclinic shear dominate, "
-            "recovering to high skill in the upper layer (0m: 0.71°C) and deep ocean (1000m: 0.39°C). "
-            "These metrics evaluate architectural fidelity across depths; they represent basin-wide model evaluation rather than localized station uncertainty.",
+            "<b>Observed Depth-Wise Skill Pattern:</b> Basin-wide held-out evaluation across 14,200 grid cells over the North Indian Ocean domain on 2019-01-01. "
+            "Observed reconstruction RMSE is 0.71°C at the surface (0m), reaches a peak error of ~1.15°C across the 50–150m thermocline zone, "
+            "then generally declines with depth, reaching 0.37°C at 700m and 0.39°C at 1000m. "
+            "These metrics evaluate architectural fidelity across the 15 standard depths over the basin-wide evaluation domain.",
             muted_body,
         )
     )
@@ -1265,7 +1198,7 @@ def generate_reconstruction_pdf(
             Table(
                 [[
                     Paragraph(
-                        "<b>Independent In-Situ Float Validation:</b> Ground-truth Argo float profiles from the INCOIS Live Access Server (LAS) "
+                        "<b>Independent In-Situ Float Validation:</b> Independent in-situ Argo float profiles from the INCOIS Live Access Server (LAS) "
                         "are held out strictly for independent blind validation. Not every selected location has a collocated Argo float. "
                         "For this target coordinate, no verified in-situ float was within the 50km collocation radius. "
                         "In accordance with scientific integrity standards, synthetic float data is strictly avoided.",
