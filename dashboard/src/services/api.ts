@@ -97,15 +97,20 @@ export async function fetchReconstructionHistory(
 }
 
 export async function downloadReconstructionPdf(
-  reconstruction: ReconstructionResponse
+  reconstruction: ReconstructionResponse,
+  transect?: TransectResponse | null
 ): Promise<void> {
+  const payload = {
+    ...reconstruction,
+    transect: transect || undefined,
+  };
   const response = await fetch(`${API_BASE_URL}/report/pdf`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/pdf',
     },
-    body: JSON.stringify(reconstruction),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {

@@ -25,6 +25,7 @@ from api.schemas.departure import (
     DepartureRequest,
     DepartureResponse,
 )
+from api.schemas.report import ReportPdfRequest
 
 __all__ = [
     "SurfaceContext",
@@ -44,5 +45,6 @@ __all__ = [
     "StationDepartureProfile",
     "DepartureRequest",
     "DepartureResponse",
+    "ReportPdfRequest",
 ]
 

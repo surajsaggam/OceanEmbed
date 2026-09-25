@@ -36,6 +36,7 @@ interface AnalysisWorkbenchProps {
   scatterData: EmbeddingScatterResponse | null;
   onSelectCoordinates: (lat: number, lon: number) => void;
   onSelectDate?: (date: string) => void;
+  onTransectChange?: (transect: TransectResponse | null) => void;
 }
 
 type SoundingViewMode = 'chart' | 'split' | 'table' | 'transect';
@@ -49,6 +50,7 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
   scatterData,
   onSelectCoordinates,
   onSelectDate,
+  onTransectChange,
 }) => {
   const [viewMode, setViewMode] = useState<SoundingViewMode>('split');
   const [diagnosticTab, setDiagnosticTab] = useState<string>('drivers');
@@ -91,6 +93,10 @@ export const AnalysisWorkbench: React.FC<AnalysisWorkbenchProps> = ({
       loadTransect(transectPoints, effectiveDate);
     }
   }, [effectiveDate]);
+
+  useEffect(() => {
+    onTransectChange?.(transectData);
+  }, [transectData, onTransectChange]);
 
   const handleAddTransectPoint = (lat: number, lon: number) => {
     if (transectPoints.length >= 2) {

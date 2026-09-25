@@ -5,7 +5,7 @@ import { TargetingStationBar } from './components/targeting/TargetingStationBar'
 import { AnalysisWorkbench } from './components/workbench/AnalysisWorkbench';
 import { useOceanEmbed } from './hooks/useOceanEmbed';
 import { downloadReconstructionPdf } from './services/api';
-import type { OceanPreset } from './types/api';
+import type { OceanPreset, TransectResponse } from './types/api';
 
 export function App() {
   const {
@@ -31,6 +31,7 @@ export function App() {
     autoReconstructOnMount: true,
   });
 
+  const [activeTransect, setActiveTransect] = useState<TransectResponse | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
 
@@ -61,7 +62,7 @@ export function App() {
     setGeneratingPdf(true);
     setReportError(null);
     try {
-      await downloadReconstructionPdf(reconstruction);
+      await downloadReconstructionPdf(reconstruction, activeTransect);
     } catch (err: any) {
       console.error('Failed to generate report PDF:', err);
       setReportError(err?.detail || err?.message || 'Failed to download report PDF');
@@ -150,6 +151,7 @@ export function App() {
         scatterData={scatterData}
         onSelectCoordinates={handleSelectCoordinates}
         onSelectDate={setDate}
+        onTransectChange={setActiveTransect}
       />
     </div>
   );
