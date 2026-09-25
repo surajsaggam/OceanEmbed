@@ -10,13 +10,10 @@ This document explains the key capabilities and unique features developed for th
 The Vertical Subsurface Transect feature allows a user to select two points across the North Indian Ocean map and draw a custom path. OceanIQ slices through the ocean along that line and displays a 2D vertical temperature cross-section from the surface down to 1000 meters depth. It shows how water temperature changes continuously with distance and depth.
 
 ### Why it is useful
-In the real ocean, water temperature does not just vary vertically at one location; it forms fronts, eddies, and sloping layers across hundreds of kilometers. Instead of clicking one spot at a time, oceanographers and forecasters can view an entire vertical curtain across basins like the Bay of Bengal or Arabian Sea to spot thermal boundaries and thermocline dips.
+In the real ocean, water temperature does not just vary vertically at one location; it forms fronts, eddies, and sloping layers across hundreds of kilometers. Instead of clicking one spot at a time, oceanographers and researchers can view an entire vertical curtain across basins like the Bay of Bengal or Arabian Sea to spot thermal boundaries and thermocline dips.
 
 ### How OceanIQ uses it
 OceanIQ samples stations along the selected trajectory and extracts temperatures directly from the reconstructed 3D temperature field produced by the Phase-1 model. It overlays key physical boundaries including the 26°C isotherm (D26) and Mixed Layer Depth (MLD). No new ML model was added to create this cross-section.
-
-### Example
-A user clicks near Chennai (13.0°N, 80.5°E) and near the Andaman Islands (11.5°N, 92.5°E). OceanIQ draws the path and instantly displays a 1,300-km vertical thermal cross-section showing warm surface water tapering into the cool deep thermocline across the Bay of Bengal.
 
 ---
 
@@ -27,13 +24,10 @@ Subsurface Reconstruction Departure shows the exact difference between the Ocean
 `Reconstruction Departure = OceanIQ Reconstruction − GLORYS12V1 Reference`
 
 ### Why it is useful
-Scientific AI systems should never operate as blind black boxes. By showing where OceanIQ runs slightly warmer (positive departure) or cooler (negative departure) compared to a trusted numerical model, users can immediately evaluate reconstruction quality, confidence, and regional fidelity.
+Scientific AI systems should never operate as blind black boxes. By showing where OceanIQ runs slightly warmer (positive departure) or cooler (negative departure) compared to the GLORYS12V1 numerical ocean reanalysis reference dataset, users can immediately inspect reconstruction differences and assess agreement with the reference field.
 
 ### How OceanIQ uses it
 OceanIQ queries the collocated GLORYS12V1 reference field for the identical date and coordinates, computes the difference across the 15 standard depths, and reports summary statistics including Root Mean Square Error (RMSE), Mean Absolute Error (MAE), and mean bias. Crucially, OceanIQ clearly states that GLORYS12V1 is a numerical ocean reanalysis reference dataset, NOT direct physical ground truth.
-
-### Example
-At 18.50°N, 88.25°E at 100 meters depth, OceanIQ reconstructs 23.40°C while GLORYS12V1 records 23.10°C. OceanIQ displays a departure of +0.30°C and highlights the depth-wise departure profile along with the overall station RMSE (e.g., 0.38°C).
 
 ---
 
@@ -43,20 +37,17 @@ At 18.50°N, 88.25°E at 100 meters depth, OceanIQ reconstructs 23.40°C while G
 Depth-Wise Model Skill shows how well the OceanIQ model performs across each of the 15 standard ocean depths: 0, 5, 10, 20, 30, 50, 75, 100, 125, 150, 200, 300, 500, 700, and 1000 meters. It displays standard statistical accuracy metrics—Root Mean Square Error (RMSE), Mean Absolute Error (MAE), and bias—at each depth level.
 
 ### Why it is useful
-Reconstructing subsurface ocean temperature is much harder in the thermocline (where temperatures drop abruptly) than in the uniform deep ocean or at the surface. This feature lets users see exactly where the model is strongest and where reconstruction uncertainty naturally rises, instead of hiding behind a single averaged number.
+Reconstructing subsurface ocean temperature is much harder in the thermocline (where temperatures drop abruptly) than in the uniform deep ocean or at the surface. This feature lets users see exactly where the model is strongest and where reconstruction error naturally increases, instead of hiding behind a single averaged number.
 
 ### How OceanIQ uses it
-OceanIQ presents verified evaluation metrics derived from a basin-wide evaluation of 14,200 held-out test cells across the North Indian Ocean on 2019-01-01. These metrics evaluate the architectural accuracy across depths over the whole basin; they represent broad model evaluation rather than a single point measurement.
-
-### Example
-The user looks at the Depth-Wise Skill chart and sees that surface error is low (RMSE 0.71°C), error reaches an expected peak in the dynamic 50–150 m thermocline zone (~1.15°C), and then error steadily declines to 0.37°C at 700 m and 0.39°C at 1000 m.
+OceanIQ presents verified evaluation metrics derived from a basin-wide evaluation of 14,200 held-out test cells across the North Indian Ocean on 2019-01-01. These metrics evaluate architectural accuracy across depths over the whole basin: surface error is low (RMSE 0.71°C), error reaches an observed peak in the dynamic 50–150 m thermocline zone (~1.15°C), and then generally declines with depth, reaching 0.37°C at 700 m and 0.39°C at 1000 m.
 
 ---
 
 ## 4. TCHP — Tropical Cyclone Heat Potential
 
 ### What it does
-Tropical Cyclone Heat Potential (TCHP) is a derived scientific indicator that measures the excess thermal heat stored in the upper ocean between the surface and the 26°C isotherm depth (D26). It integrates heat content only for water warmer than 26°C, which is the established thermal threshold needed to fuel tropical cyclones.
+Tropical Cyclone Heat Potential (TCHP) is a derived scientific indicator that measures the excess thermal heat stored in the upper ocean between the surface and the 26°C isotherm depth (D26). It integrates heat content only for water warmer than 26°C, which is the conventional 26°C threshold used in TCHP calculations.
 
 ### Why it is useful
 Surface temperature alone can be misleading: a very thin layer of warm water can cool rapidly under strong storm winds. TCHP reveals how deep the heat reservoir actually goes, helping researchers understand how much thermal fuel is available in cyclone-prone areas such as the Bay of Bengal.
@@ -66,18 +57,15 @@ TCHP is calculated as a post-processing step directly from the OceanIQ reconstru
 `TCHP = ρ × cp × integral of [T(z) − 26°C] from 0 to D26`
 (using standard physical constants ρ = 1026 kg/m³ and cp = 3990 J/(kg·°C)). It is displayed prominently alongside D26 and MLD in physical units of kJ/cm². OceanIQ clearly states that TCHP is a physical heat-content indicator and does NOT predict cyclone tracks or guarantee rapid intensification.
 
-### Example
-In the central Bay of Bengal, the reconstructed profile has a deep 26°C isotherm at 85.0 meters with warm upper-layer waters. OceanIQ calculates a high TCHP of 68.4 kJ/cm², alerting the researcher to substantial upper-ocean thermal energy storage.
-
 ---
 
 ## 5. Scientific PDF Report
 
 ### What it does
-OceanIQ provides a one-click technical PDF report generator that exports a comprehensive, multi-page scientific briefing for any selected date and geographic coordinate. The report synthesizes all analysis views, charts, and metrics into a standardized document suitable for research and operational review.
+OceanIQ provides a one-click technical PDF report generator that exports a comprehensive, multi-page technical PDF briefing for any selected date and geographic coordinate. The report synthesizes all analysis views, charts, and metrics into a standardized document suitable for research, analysis and presentation.
 
 ### Why it is useful
-Researchers, naval analysts, and students need portable, reproducible documentation they can share, archive, or print. Instead of taking manual screenshots, OceanIQ formats the complete scientific analysis into an organized report with exact provenance and citations.
+Researchers, students, and technical teams need portable, reproducible documentation they can share, archive, or print. Instead of taking manual screenshots, OceanIQ formats the complete scientific analysis into an organized report with exact provenance and data-source information.
 
 ### How OceanIQ uses it
 The PDF report is built dynamically from the active session data. It includes:
@@ -91,11 +79,8 @@ The PDF report is built dynamically from the active session data. It includes:
 - **Depth-Wise Model Skill:** Basin-wide RMSE, MAE, and bias across all 15 depths.
 - **Independent In-Situ Argo Float Validation:** Collocated real float profile comparison when available (strictly avoiding synthetic float data).
 - **128-D Latent Representation:** 2D PCA projection of the internal feature space against contextual reference points.
-- **Methodology & Model Lineage:** Parameter counts, input tensor dimensions, and software versions.
+- **Methodology & Model Lineage:** Parameter counts, input tensor dimensions, depth configuration, and model lineage.
 - **Scientific Disclaimers:** Explicit statements on physical boundaries and data sources.
-
-### Example
-A user clicks "Export Technical PDF Report" after examining an observation in the northern Bay of Bengal. Within seconds, a 4-page technical PDF (`OceanIQ_Report_2019-01-01_18.50N_88.25E.pdf`) is downloaded with all charts, metrics, and provenance ready for presentation.
 
 ---
 
@@ -110,24 +95,18 @@ Satellites can only see the "ocean skin" (the top millimeters of the sea). In-si
 ### How OceanIQ uses it
 The interface plots depth downward on the vertical axis (from 0 m down to 1000 m) and temperature on the horizontal axis, following standard oceanographic scientific conventions. It automatically identifies and flags critical physical thresholds: the 26°C isotherm depth (D26) and the Mixed Layer Depth (MLD).
 
-### Example
-The user clicks on the southern Arabian Sea. The profile immediately displays 28.5°C at the surface, shows a steady upper mixed layer down to 35 meters (MLD), dips sharply through the thermocline, and levels out to 7.8°C at 1000 meters.
-
 ---
 
 ## 7. 128-D Ocean Embedding
 
 ### What it does
-OceanEmbed compresses the 14-channel input tensor (7 physical surface variables plus 7 quality masks) into an internal 128-dimensional latent vector ($Z$). OceanIQ provides an interactive 2D Principal Component Analysis (PCA) projection of this embedding space to show where the current observation sits relative to typical oceanographic conditions across the basin.
+OceanEmbed compresses the 14-channel input tensor (7 physical surface variables plus 7 quality masks) into an internal 128-dimensional latent vector ($Z$). OceanIQ provides an interactive 2D Principal Component Analysis (PCA) projection of this embedding space to show where the current observation sits relative to contextual reference points across the basin.
 
 ### Why it is useful
 Modern deep learning works by creating rich internal representations of complex data. Visualizing the latent space gives researchers a window into how the neural network groups different surface observation patterns, building intuition about how surface forcing relates to subsurface structure.
 
 ### How OceanIQ uses it
 OceanIQ extracts the 128-dimensional embedding from the Phase-1 model and projects it onto two leading principal components. It displays the query reconstruction alongside contextual reference points across the North Indian Ocean. OceanIQ maintains scientific integrity by clearly labeling background clusters as contextual reference points without claiming that PCA clusters prove discovered water-mass classifications or physical causality.
-
-### Example
-When the user inspects an observation in the northern Bay of Bengal, the 2D projection marks the point in the PCA manifold labeled with its geographic basin (`Basin: Bay of Bengal`), showing its relative proximity to other reference profiles in the feature space.
 
 ---
 
@@ -146,14 +125,11 @@ Scientific AI tools must be trustworthy. Presenting synthetic numbers as real me
 4. **Estimates are Explicitly Identified:** All reconstructed temperatures and derived quantities (D26, MLD, TCHP) are clearly presented as model estimates.
 5. **Clear Scientific Disclaimers:** The platform explicitly states that OceanIQ complements physical observations and numerical models rather than replacing ships, moorings, or Argo floats.
 
-### Example
-When a user opens the Argo Validation panel, if an in-situ float exists nearby, OceanIQ displays the real WMO platform ID, observation date, distance offset, and empirical RMSE. If no float was nearby, the card states: *"No collocated in-situ float within 50 km — synthetic float data is strictly avoided."*
-
 ---
 
 # Overall OceanIQ USP
 
-OceanIQ delivers an end-to-end scientific workflow that transforms daily satellite ocean-skin observations into an actionable, 3D subsurface ocean intelligence platform:
+OceanIQ delivers an end-to-end workflow for reconstructing, exploring, evaluating, and reporting subsurface ocean temperature:
 
 ```text
 Surface Observations
