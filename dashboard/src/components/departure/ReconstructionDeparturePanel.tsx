@@ -478,7 +478,7 @@ export const ReconstructionDeparturePanel: React.FC<ReconstructionDeparturePanel
           <div className="bg-white border border-[#e2e8f0] rounded-xl p-4 shadow-xs">
             <div className="flex items-center justify-between pb-2 border-b border-[#f1f5f9]">
               <span className="text-xs font-semibold text-[#0d253d] uppercase tracking-wider">
-                Station Sounding Residuals
+                Station Profile Comparison
               </span>
               <span className="text-[11px] font-mono text-[#64748d]">
                 {latitude.toFixed(2)}°N, {longitude.toFixed(2)}°E

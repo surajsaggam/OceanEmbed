@@ -37,7 +37,7 @@ export const SurfaceDriversPanel: React.FC<SurfaceDriversPanelProps> = ({
       value: surface.sst_c.toFixed(2),
       unit: '°C',
       source: 'OSTIA MW+IR (0.05° Copernicus)',
-      role: 'Upper boundary Dirichlet condition; governs ocean skin heating and mixed layer base.',
+      role: 'Upper thermal boundary condition reflecting surface ocean heat content.',
     },
     {
       name: 'Sea Surface Salinity',
@@ -45,7 +45,7 @@ export const SurfaceDriversPanel: React.FC<SurfaceDriversPanelProps> = ({
       value: surface.sss_psu.toFixed(2),
       unit: 'PSU',
       source: 'SMAP / SMOS L3 (NASA JPL / ESA)',
-      role: 'Haline buoyancy control; resolves barrier layer thickness and freshwater plumes in the Bay of Bengal.',
+      role: 'Surface salinity influencing upper-ocean density and stratification.',
     },
     {
       name: 'Sea Surface Height Anomaly',
@@ -53,7 +53,7 @@ export const SurfaceDriversPanel: React.FC<SurfaceDriversPanelProps> = ({
       value: `${surface.ssh_m >= 0 ? '+' : ''}${surface.ssh_m.toFixed(2)}`,
       unit: 'm',
       source: 'DUACS Multi-Mission Altimetry (CMEMS)',
-      role: 'Integrated baroclinic proxy; directly relates to steric height and pycnocline/thermocline depth displacement.',
+      role: 'Altimetric sea surface height anomaly reflecting integrated water column heat content and dynamic topography.',
     },
     {
       name: 'Zonal Surface Current',
@@ -61,7 +61,7 @@ export const SurfaceDriversPanel: React.FC<SurfaceDriversPanelProps> = ({
       value: `${surface.current_u_ms >= 0 ? '+' : ''}${surface.current_u_ms.toFixed(2)}`,
       unit: 'm/s',
       source: 'OSCAR / Copernicus Ocean Currents',
-      role: 'Zonal advective heat flux component across equatorial wave guides and boundary currents.',
+      role: 'East-west surface velocity component indicating zonal surface advection.',
     },
     {
       name: 'Meridional Surface Current',
@@ -69,7 +69,7 @@ export const SurfaceDriversPanel: React.FC<SurfaceDriversPanelProps> = ({
       value: `${surface.current_v_ms >= 0 ? '+' : ''}${surface.current_v_ms.toFixed(2)}`,
       unit: 'm/s',
       source: 'OSCAR / Copernicus Ocean Currents',
-      role: 'Meridional advective heat flux component; tracks West India and East India coastal currents.',
+      role: 'North-south surface velocity component indicating meridional surface advection.',
     },
     {
       name: 'Zonal 10m Wind',
@@ -77,7 +77,7 @@ export const SurfaceDriversPanel: React.FC<SurfaceDriversPanelProps> = ({
       value: `${surface.wind_u_ms >= 0 ? '+' : ''}${surface.wind_u_ms.toFixed(2)}`,
       unit: 'm/s',
       source: 'ASCAT / MetOp Scatterometer',
-      role: 'Zonal momentum flux driving surface turbulence, evaporation, and shear-induced vertical mixing.',
+      role: 'East-west 10-meter atmospheric wind velocity driving surface wind stress.',
     },
     {
       name: 'Meridional 10m Wind',
@@ -85,7 +85,7 @@ export const SurfaceDriversPanel: React.FC<SurfaceDriversPanelProps> = ({
       value: `${surface.wind_v_ms >= 0 ? '+' : ''}${surface.wind_v_ms.toFixed(2)}`,
       unit: 'm/s',
       source: 'ASCAT / MetOp Scatterometer',
-      role: 'Meridional wind stress curl driving coastal upwelling (e.g. Somali Current / SW monsoon jets).',
+      role: 'North-south 10-meter atmospheric wind velocity driving surface wind stress.',
     },
   ];
 

@@ -141,7 +141,7 @@ export const LatentManifoldView: React.FC<LatentManifoldViewProps> = ({
         extraCssText: 'box-shadow: 0 4px 12px rgba(0, 55, 112, 0.08); border-radius: 8px;',
         formatter: (params: any) => {
           if (params.seriesName === 'Target Station') {
-            return `<b>Active Target Station</b><br/>Regime: ${activeEmbedding?.regime_label}<br/>PCA Coordinates: [${params.value[0].toFixed(2)}, ${params.value[1].toFixed(2)}]`;
+            return `<b>Active Target Station</b><br/>Region / Basin: ${activeEmbedding?.regime_label}<br/>PCA Coordinates: [${params.value[0].toFixed(2)}, ${params.value[1].toFixed(2)}]`;
           }
           const item = params.data.itemData;
           if (!item) return '';
@@ -198,7 +198,7 @@ export const LatentManifoldView: React.FC<LatentManifoldViewProps> = ({
         <span>Subspace: Linear Dimensionality Reduction (PCA 1 vs PCA 2)</span>
         {activeEmbedding && (
           <span className="text-[#3b49df] font-medium">
-            Active Station Regime: {activeEmbedding.regime_label}
+            Region / Basin: {activeEmbedding.regime_label}
           </span>
         )}
       </div>

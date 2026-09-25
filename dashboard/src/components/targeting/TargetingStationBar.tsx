@@ -209,7 +209,7 @@ export const TargetingStationBar: React.FC<TargetingStationBarProps> = ({
           </div>
         </div>
 
-        {/* Oceanographic Regime HeroUI ComboBox */}
+        {/* Region / Basin HeroUI ComboBox */}
         <div>
           <ComboBox
             selectedKey={selectedKey}
@@ -217,7 +217,7 @@ export const TargetingStationBar: React.FC<TargetingStationBarProps> = ({
             className="w-60 sm:w-72"
           >
             <Label className="block text-[11px] font-semibold text-[#64748d] mb-1.5 uppercase tracking-wider">
-              Oceanographic Regime
+              Region / Basin
             </Label>
             <ComboBox.InputGroup className="h-9 px-3 rounded-lg border border-[#cbd5e1] bg-white flex items-center justify-between gap-2 text-sm text-[#273951] hover:border-[#94a3b8] focus-within:border-[#533afd] focus-within:ring-1 focus-within:ring-[#533afd] transition-all">
               <Input

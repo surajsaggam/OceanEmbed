@@ -10,10 +10,13 @@ export const ArgoValidationPanel: React.FC<ArgoValidationPanelProps> = ({ argo }
     return (
       <div className="p-8 text-center text-[#64748d] text-sm border border-[#e3e8ee] rounded-xl bg-white space-y-2 shadow-xs">
         <div className="font-semibold text-base text-[#0d253d]">
-          No Collocated In-Situ Argo Float in Validation Window
+          No collocated Argo profile found
         </div>
-        <p className="text-[#64748d] max-w-lg mx-auto leading-relaxed">
-          There is no quality-controlled in-situ Argo float observation matching this coordinate and date neighborhood (±0.25°, ±24h) in the local catalog. Ground-truth Argo float profiles from the INCOIS Live Access Server (LAS) are held out strictly for independent blind validation.
+        <div className="text-xs font-mono text-[#64748d]">
+          Search window: ±0.25° spatially · ±24h temporally
+        </div>
+        <p className="text-[#64748d] max-w-lg mx-auto leading-relaxed mt-2 text-xs">
+          There is no quality-controlled in-situ Argo float observation matching this coordinate and date neighborhood in the local catalog. Independent in-situ Argo float profiles from the INCOIS Live Access Server (LAS) are held out strictly for independent blind validation.
         </p>
       </div>
     );

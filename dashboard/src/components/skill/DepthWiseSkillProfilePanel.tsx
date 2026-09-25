@@ -143,7 +143,7 @@ export const DepthWiseSkillProfilePanel: React.FC<DepthWiseSkillProfilePanelProp
     ctx.font = '9.5px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
-    ctx.fillText('Thermocline Layer (50–150m)', padLeft + plotWidth - 8, tcTop + 4);
+    ctx.fillText('50–150m Reference Band', padLeft + plotWidth - 8, tcTop + 4);
 
 
     // Simplified, light gridlines for standard depths
@@ -367,7 +367,7 @@ export const DepthWiseSkillProfilePanel: React.FC<DepthWiseSkillProfilePanelProp
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="bg-white border border-[#e2e8f0] rounded-xl p-3 shadow-xs">
-            <span className="text-[11px] font-mono text-[#64748d] block">Peak Thermocline Error</span>
+            <span className="text-[11px] font-mono text-[#64748d] block">Peak Reconstruction Error</span>
             <div className="flex items-baseline gap-1 mt-1">
               <span className="text-lg font-mono font-bold text-[#0d253d]">
                 {summary.peakRmse.rmse.toFixed(3)}
@@ -380,7 +380,7 @@ export const DepthWiseSkillProfilePanel: React.FC<DepthWiseSkillProfilePanelProp
           </div>
 
           <div className="bg-white border border-[#e2e8f0] rounded-xl p-3 shadow-xs">
-            <span className="text-[11px] font-mono text-[#64748d] block">Upper Ocean Skill</span>
+            <span className="text-[11px] font-mono text-[#64748d] block">Surface RMSE</span>
             <div className="flex items-baseline gap-1 mt-1">
               <span className="text-lg font-mono font-bold text-[#0284c7]">
                 {summary.surface.rmse.toFixed(3)}
@@ -393,7 +393,7 @@ export const DepthWiseSkillProfilePanel: React.FC<DepthWiseSkillProfilePanelProp
           </div>
 
           <div className="bg-white border border-[#e2e8f0] rounded-xl p-3 shadow-xs">
-            <span className="text-[11px] font-mono text-[#64748d] block">Abyssal Stability</span>
+            <span className="text-[11px] font-mono text-[#64748d] block">Deep RMSE</span>
             <div className="flex items-baseline gap-1 mt-1">
               <span className="text-lg font-mono font-bold text-[#10b981]">
                 {summary.abyss.rmse.toFixed(3)}
