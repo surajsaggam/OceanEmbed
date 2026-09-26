@@ -122,7 +122,7 @@ desktop.ini
 *.md
 **/*.md
 !/README.md
-!README.md
+!/readme.md
 
 # ── Explicitly Tracked Exceptions ─────────────────────────────────────────────
 # environment/env_verification.json   ← tracked (GPU/CUDA/AMP verification report)
